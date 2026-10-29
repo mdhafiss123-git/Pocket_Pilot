@@ -1,0 +1,3 @@
+import { describe, expect, it } from 'vitest';
+import { taskSchema, transactionSchema } from '../lib/validation';
+describe('input validation', () => { it('accepts a valid expense',()=>expect(transactionSchema.safeParse({title:'Lunch',amount:'250',kind:'expense',category:'Food',date:'2026-10-22'}).success).toBe(true)); it('blocks zero or negative money',()=>expect(transactionSchema.safeParse({title:'x',amount:0,kind:'expense',category:'x',date:'2026-10-22'}).success).toBe(false)); it('only permits supported recurrence',()=>expect(taskSchema.safeParse({title:'Pay bill',dueDate:'2026-10-22',recurring:'hourly',reminder:false}).success).toBe(false)); });

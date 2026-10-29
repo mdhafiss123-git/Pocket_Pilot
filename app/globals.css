@@ -1,0 +1,128 @@
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+@layer base {
+	:root {
+		--font-body: "Inter", "Avenir Next", "Manrope", "Segoe UI", sans-serif;
+		--font-display: "Inter", "Sora", "Trebuchet MS", sans-serif;
+		--bg: #f8f9fa;
+		--bg-elevated: #ffffff;
+		--surface: #ffffff;
+		--surface-soft: #f9fafb;
+		--surface-strong: #ffffff;
+		--line: rgba(148, 163, 184, 0.4);
+		--text: #18181b;
+		--text-muted: #71717a;
+		--brand: #18181b;
+		--brand-strong: #09090b;
+		--danger: #dc2626;
+		--shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+		--radius-lg: 0.75rem;
+		--radius-md: 0.5rem;
+	}
+
+	.dark {
+		--bg: #09090b;
+		--bg-elevated: #101012;
+		--surface: #101012;
+		--surface-soft: #18181b;
+		--surface-strong: #101012;
+		--line: rgba(63, 63, 70, 0.8);
+		--text: #fafafa;
+		--text-muted: #a1a1aa;
+		--brand: #fafafa;
+		--brand-strong: #ffffff;
+		--danger: #f87171;
+		--shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+	}
+
+	* {
+		@apply border-transparent;
+	}
+
+	html,
+	body {
+		min-height: 100%;
+	}
+
+	body {
+		color: var(--text);
+		background:
+			radial-gradient(circle at 100% -10%, rgba(63, 134, 255, 0.2), transparent 40%),
+			radial-gradient(circle at -6% 10%, rgba(19, 186, 140, 0.18), transparent 35%),
+			linear-gradient(160deg, var(--bg), var(--bg-elevated));
+		@apply antialiased;
+	}
+
+	button,
+	a,
+	input,
+	select,
+	textarea {
+		@apply transition;
+	}
+}
+
+@layer components {
+	.card {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow);
+		@apply p-5;
+	}
+
+	.card-soft {
+		background: var(--surface-soft);
+		border: 1px solid var(--line);
+		border-radius: var(--radius-md);
+		@apply p-4;
+	}
+
+	.field {
+		background: var(--surface-strong);
+		border: 1px solid var(--line);
+		color: var(--text);
+		border-radius: 0.5rem;
+		@apply w-full px-3 py-2 text-sm outline-none;
+	}
+
+	.field::placeholder {
+		color: var(--text-muted);
+	}
+
+	.field:focus {
+		border-color: var(--text-muted);
+		outline: none;
+	}
+
+	.btn {
+		border-radius: 0.5rem;
+		background: var(--brand);
+		color: var(--bg);
+		@apply inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium;
+	}
+
+	.btn:hover {
+		background: var(--brand-strong);
+	}
+
+	.btn:disabled {
+		@apply cursor-not-allowed opacity-50;
+	}
+
+	.btn-ghost {
+		border: 1px solid transparent;
+		color: var(--text);
+		border-radius: 0.5rem;
+		@apply inline-flex items-center gap-2 px-2.5 py-1.5 text-sm font-medium;
+	}
+
+	.btn-ghost:hover {
+		background: var(--surface-soft);
+	}
+
+	.metric-value {
+		@apply text-2xl font-semibold lg:text-3xl;
+	}
+}

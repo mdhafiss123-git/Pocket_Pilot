@@ -1,0 +1,23 @@
+-- Pocket Pilot: run this migration in a Supabase project before enabling cloud mode.
+create extension if not exists "pgcrypto";
+create table public.profiles (id uuid primary key references auth.users(id) on delete cascade, display_name text, avatar_url text, currency text not null default 'INR', created_at timestamptz not null default now());
+create table public.categories (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, name text not null check (char_length(name) between 1 and 50), color text default '#18a882', created_at timestamptz not null default now(), unique(user_id,name));
+create type public.transaction_kind as enum ('income','expense');
+create table public.transactions (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, category_id uuid references public.categories(id) on delete set null, title text not null check(char_length(title) between 1 and 100), amount numeric(14,2) not null check(amount > 0), kind public.transaction_kind not null, occurred_on date not null default current_date, notes text check(char_length(coalesce(notes,'')) <= 500), created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table public.budgets (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, category_id uuid not null references public.categories(id) on delete cascade, month date not null check(date_trunc('month', month)::date = month), amount numeric(14,2) not null check(amount > 0), unique(user_id,category_id,month));
+create table public.savings_goals (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, name text not null check(char_length(name) between 1 and 100), target_amount numeric(14,2) not null check(target_amount > 0), saved_amount numeric(14,2) not null default 0 check(saved_amount >= 0), target_date date, created_at timestamptz not null default now());
+create type public.repeat_rule as enum ('none','daily','weekly','monthly');
+create table public.tasks (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, title text not null check(char_length(title) between 1 and 150), due_on date not null default current_date, completed boolean not null default false, recurrence public.repeat_rule not null default 'none', reminder_at timestamptz, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+alter table public.profiles enable row level security; alter table public.categories enable row level security; alter table public.transactions enable row level security; alter table public.budgets enable row level security; alter table public.savings_goals enable row level security; alter table public.tasks enable row level security;
+-- Every data operation is restricted to the currently authenticated owner.
+create policy "own profile" on public.profiles for all using (id = auth.uid()) with check (id = auth.uid());
+create policy "own categories" on public.categories for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "own transactions" on public.transactions for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "own budgets" on public.budgets for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "own goals" on public.savings_goals for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "own tasks" on public.tasks for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+create or replace function public.create_profile() returns trigger language plpgsql security definer set search_path = public as $$ begin insert into public.profiles (id,display_name,avatar_url) values (new.id,new.raw_user_meta_data->>'full_name',new.raw_user_meta_data->>'avatar_url') on conflict do nothing; return new; end; $$;
+create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.create_profile();
+create or replace function public.set_updated_at() returns trigger language plpgsql as $$ begin new.updated_at=now(); return new; end; $$;
+create trigger transactions_updated before update on public.transactions for each row execute procedure public.set_updated_at(); create trigger tasks_updated before update on public.tasks for each row execute procedure public.set_updated_at();
+create index transactions_user_date on public.transactions(user_id, occurred_on desc); create index tasks_user_due on public.tasks(user_id, due_on);
