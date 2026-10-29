@@ -521,7 +521,7 @@ export default function Home() {
             onClick={() => setShowSignOutModal(true)}
             className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-soft)] transition"
           >
-            <LogoutIcon size={16} strokeWidth={1.25} />
+            <LogoutIcon size={16} className="stroke-[1.5]" />
             <span>Sign Out</span>
           </button>
         </div>
