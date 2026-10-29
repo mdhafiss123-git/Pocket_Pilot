@@ -2,6 +2,7 @@ const CACHE_NAME = 'pocket-pilot-v1';
 const PRECACHE_URLS = [
   '/',
   '/manifest.json',
+  '/logo.png',
   '/icon-192x192.png',
   '/icon-512x512.png',
   '/icon-maskable-192x192.png',

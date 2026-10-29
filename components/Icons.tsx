@@ -50,37 +50,22 @@ export function LogoutIcon({ className = 'w-4 h-4', size = 18 }: { className?: s
   );
 }
 
-export function PocketPilotLogo({ className = 'w-7 h-7', size = 28 }: { className?: string; size?: number }) {
+export function PocketPilotLogo({
+  className = '',
+  size = 28,
+  alt = 'Pocket Pilot',
+}: {
+  className?: string;
+  size?: number;
+  alt?: string;
+}) {
   return (
-    <svg
+    <img
+      src="/logo.png"
+      alt={alt}
       width={size}
       height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-    >
-      <defs>
-        <linearGradient id="ppGrad" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#10b981" />
-          <stop offset="0.5" stopColor="#06b6d4" />
-          <stop offset="1" stopColor="#3b82f6" />
-        </linearGradient>
-      </defs>
-      <rect width="32" height="32" rx="8" fill="url(#ppGrad)" />
-      <path
-        d="M7 16L25 8L17 26L14 18L7 16Z"
-        fill="white"
-        stroke="white"
-        strokeWidth="1.2"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M14 18L25 8"
-        stroke="rgba(16, 185, 129, 0.45)"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
-    </svg>
+      className={`object-contain rounded-md inline-block select-none ${className}`}
+    />
   );
 }
