@@ -19,16 +19,26 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-	themeColor: '#000000',
+	themeColor: [
+		{ media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+		{ media: '(prefers-color-scheme: dark)', color: '#020617' },
+	],
 	width: 'device-width',
 	initialScale: 1,
-	maximumScale: 5,
+	maximumScale: 1,
+	viewportFit: 'cover',
+	colorScheme: 'light dark',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body className="font-[var(--font-body)]">
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `(function(){try{var t=localStorage.theme;var d=t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`,
+					}}
+				/>
 				<PWARegister />
 				{children}
 			</body>

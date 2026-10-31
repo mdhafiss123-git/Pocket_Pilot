@@ -39,7 +39,7 @@ export default function LandingPage({ onSignIn, authError }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] transition-colors">
       {/* Top Navigation */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 dark:border-[var(--line)] bg-[var(--surface)]">
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/70">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2.5">
             <PocketPilotLogo size={28} />
@@ -147,7 +147,7 @@ export default function LandingPage({ onSignIn, authError }: LandingPageProps) {
           </div>
 
           {/* Mock App Window */}
-          <div className="rounded-lg border border-slate-200 dark:border-[var(--line)] overflow-hidden">
+          <div className="rounded-xl border border-slate-200 bg-white/70 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 overflow-hidden">
             {/* Window bar */}
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-[var(--line)] bg-[var(--surface-soft)] px-4 py-2.5">
               <div className="flex items-center gap-2">
@@ -175,7 +175,7 @@ export default function LandingPage({ onSignIn, authError }: LandingPageProps) {
               {activeTab === 'overview' && (
                 <div className="space-y-4">
                   {/* Portfolio Pulse */}
-                  <div className="rounded-lg border border-slate-200 dark:border-[var(--line)] p-5">
+                  <div className="rounded-xl border border-slate-200 bg-white/70 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 p-5">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-xs text-[var(--text-muted)]">
@@ -190,7 +190,7 @@ export default function LandingPage({ onSignIn, authError }: LandingPageProps) {
                       </span>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-3 gap-3 border-t border-slate-200 dark:border-[var(--line)] pt-4">
+                    <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-200 dark:border-[var(--line)] pt-4 sm:grid-cols-3">
                       <div>
                         <span className="text-xs text-[var(--text-muted)] flex items-center gap-1">
                           <TrendingUp size={14} strokeWidth={1.25} /> Monthly Income
@@ -214,7 +214,7 @@ export default function LandingPage({ onSignIn, authError }: LandingPageProps) {
 
                   {/* Velocity breakdown cards */}
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-lg border border-slate-200 dark:border-[var(--line)] p-4">
+                    <div className="rounded-xl border border-slate-200 bg-white/70 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 p-4">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Recent Activity</span>
                       </div>
@@ -236,7 +236,7 @@ export default function LandingPage({ onSignIn, authError }: LandingPageProps) {
                       </div>
                     </div>
 
-                    <div className="rounded-lg border border-slate-200 dark:border-[var(--line)] p-4">
+                    <div className="rounded-xl border border-slate-200 bg-white/70 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 p-4">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Category Velocity</span>
                         <span className="text-xs text-[var(--text-muted)]">Under Budget</span>
@@ -272,7 +272,7 @@ export default function LandingPage({ onSignIn, authError }: LandingPageProps) {
                     { name: 'Entertainment & Subscriptions', spent: '₹1,200', cap: '₹2,500', pct: 48 },
                     { name: 'Travel & Commute', spent: '₹1,400', cap: '₹3,000', pct: 46 },
                   ].map((b, i) => (
-                    <div key={i} className="rounded-lg border border-slate-200 dark:border-[var(--line)] p-4">
+                    <div key={i} className="rounded-xl border border-slate-200 bg-white/70 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 p-4">
                       <div className="flex items-center justify-between">
                         <b className="text-sm font-medium">{b.name}</b>
                       </div>
@@ -293,7 +293,7 @@ export default function LandingPage({ onSignIn, authError }: LandingPageProps) {
                     { name: 'MacBook Pro Upgrade', current: '₹1,20,000', target: '₹1,40,000', pct: 85 },
                     { name: 'Index Fund Investment', current: '₹3,50,000', target: '₹5,00,000', pct: 70 },
                   ].map((g, i) => (
-                    <div key={i} className="rounded-lg border border-slate-200 dark:border-[var(--line)] p-4">
+                    <div key={i} className="rounded-xl border border-slate-200 bg-white/70 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 p-4">
                       <div className="flex items-center justify-between">
                         <b className="text-sm font-medium">{g.name}</b>
                         <span className="text-xs text-[var(--text-muted)]">{g.pct}%</span>
@@ -323,7 +323,7 @@ export default function LandingPage({ onSignIn, authError }: LandingPageProps) {
             </p>
           </div>
 
-          <div className="rounded-lg border border-slate-200 dark:border-[var(--line)] grid gap-6 md:grid-cols-2 p-5 sm:p-6">
+          <div className="rounded-xl border border-slate-200 bg-white/70 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 grid gap-6 md:grid-cols-2 p-5 sm:p-6">
             <div className="space-y-5">
               <div>
                 <div className="flex justify-between text-sm mb-2">
@@ -371,7 +371,7 @@ export default function LandingPage({ onSignIn, authError }: LandingPageProps) {
             </div>
 
             {/* Projected Outputs */}
-            <div className="flex flex-col justify-between rounded-lg border border-slate-200 dark:border-[var(--line)] p-5">
+            <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white/70 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 p-5">
               <div className="space-y-4">
                 <div>
                   <p className="text-xs text-[var(--text-muted)]">
@@ -457,7 +457,7 @@ export default function LandingPage({ onSignIn, authError }: LandingPageProps) {
             ].map((feature, i) => {
               const Icon = feature.icon;
               return (
-                <div key={i} className="rounded-lg border border-slate-200 dark:border-[var(--line)] p-4">
+                <div key={i} className="rounded-xl border border-slate-200 bg-white/70 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 p-4">
                   <div className="mb-3">
                     <Icon size={18} strokeWidth={1.25} />
                   </div>
@@ -472,7 +472,7 @@ export default function LandingPage({ onSignIn, authError }: LandingPageProps) {
 
       {/* Bottom CTA Banner */}
       <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl rounded-lg border border-slate-200 dark:border-[var(--line)] p-6 sm:p-8 text-center">
+        <div className="mx-auto max-w-3xl rounded-xl border border-slate-200 bg-white/70 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 p-6 sm:p-8 text-center">
           <h2 className="text-2xl font-semibold sm:text-3xl">
             Ready to start?
           </h2>

@@ -468,31 +468,42 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr] bg-slate-50/60 dark:bg-[var(--bg)] text-[var(--text)]">
+    <div className="min-h-screen text-slate-900 lg:grid lg:grid-cols-[272px_1fr] dark:text-slate-100">
       <div
         aria-hidden={!mobileOpen}
-        className={`fixed inset-0 z-30 bg-slate-950/40 transition lg:hidden ${
+        className={`fixed inset-0 z-30 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
           mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={() => setMobileOpen(false)}
       />
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-slate-200/80 dark:border-[var(--line)] bg-white dark:bg-[var(--surface)] p-4 shadow-sm transition-transform lg:static lg:w-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-slate-200 bg-white/95 p-3.5 backdrop-blur-xl transition-transform duration-300 dark:border-slate-800 dark:bg-slate-900/95 lg:sticky lg:top-0 lg:h-screen lg:w-auto lg:max-w-none lg:translate-x-0 lg:border-slate-200/80 lg:bg-white/70 lg:p-4 lg:dark:border-slate-800 lg:dark:bg-slate-950/40 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="mb-5 flex items-center gap-2.5 px-1">
-          <PocketPilotLogo size={24} />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold leading-tight">Pocket Pilot</p>
-            <p className="truncate text-xs text-[var(--text-muted)]">
-              {session.user.email}
-            </p>
+        <div className="mb-5 flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-900/60">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
+            <PocketPilotLogo size={24} />
           </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">Pocket Pilot</p>
+            <p className="truncate text-xs text-slate-500 dark:text-slate-400">{session.user.email}</p>
+          </div>
+          <button
+            className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-200/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white lg:hidden"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close navigation menu"
+          >
+            <X size={16} strokeWidth={1.75} />
+          </button>
         </div>
 
-        <nav className="space-y-0.5">
+        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+          Workspace
+        </p>
+
+        <nav className="space-y-1">
           {navList.map((n) => {
             const Icon = icons[n];
             const active = view === n;
@@ -503,56 +514,83 @@ export default function Home() {
                   setView(n);
                   setMobileOpen(false);
                 }}
-                className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition ${
+                className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                   active
-                    ? 'bg-[var(--surface-soft)] text-[var(--text)] font-medium'
-                    : 'text-[var(--text-muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)]'
+                    ? 'bg-emerald-500/10 text-emerald-700 ring-1 ring-inset ring-emerald-500/20 dark:text-emerald-300'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-slate-100'
                 }`}
               >
-                <Icon size={16} strokeWidth={1.25} />
+                <Icon size={18} strokeWidth={active ? 2 : 1.6} />
                 <span>{n}</span>
+                {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-500" />}
               </button>
             );
           })}
         </nav>
 
-        <div className="mt-6 border-t border-slate-200 dark:border-[var(--line)] pt-3">
+        <div className="mt-auto pt-6">
+          <div className="mb-3 rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/50">
+            <p className="text-xs font-medium text-slate-700 dark:text-slate-200">Private & secure</p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+              Your records are protected with row level security.
+            </p>
+          </div>
           <button
             onClick={() => setShowSignOutModal(true)}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-soft)] transition"
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-rose-500/10 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400"
           >
-            <LogoutIcon size={16} className="stroke-[1.5]" />
+            <LogoutIcon size={18} />
             <span>Sign Out</span>
           </button>
         </div>
       </aside>
 
-      <main className="min-w-0 flex flex-col min-h-screen">
-        <header className="sticky top-0 z-20 border-b border-slate-200/80 dark:border-[var(--line)] bg-white/95 dark:bg-[var(--surface)]/95 backdrop-blur">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 lg:px-8">
-            <div className="flex min-w-0 items-center gap-2">
+      <main className="flex min-h-screen min-w-0 flex-col">
+        <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/70">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+            <div className="flex min-w-0 items-center gap-3">
               <button
-                className="lg:hidden p-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-[var(--surface-soft)] transition-all duration-200"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white/70 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white lg:hidden"
                 onClick={() => setMobileOpen((v) => !v)}
                 aria-label="Toggle navigation menu"
               >
-                <Menu size={18} strokeWidth={1.25} />
+                <Menu size={19} strokeWidth={1.75} />
               </button>
-              <h1 className="truncate text-lg font-semibold leading-tight text-zinc-900 dark:text-[var(--text)]">{view}</h1>
+              <div className="min-w-0">
+                <p className="truncate text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
+                  Pocket Pilot
+                </p>
+                <h1 className="truncate text-lg font-semibold leading-tight text-slate-900 dark:text-white sm:text-xl">
+                  {view}
+                </h1>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
+              <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white/60 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60 sm:flex">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-emerald-500/15 text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">
+                  {(session.user.email ?? '?').slice(0, 1)}
+                </span>
+                <span className="max-w-[180px] truncate text-xs text-slate-600 dark:text-slate-300">
+                  {session.user.email}
+                </span>
+              </div>
               <ThemeToggle />
             </div>
           </div>
         </header>
 
-        <div className="mx-auto max-w-7xl p-4 pb-24 lg:p-6 flex-1 w-full">
-          {dataLoading && <div className="mb-3 text-xs text-[var(--text-muted)]">Syncing...</div>}
+        <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-5 pb-28 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+          {dataLoading && (
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-[11px] font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              Syncing your data...
+            </div>
+          )}
           {error && (
-            <div className="mb-3 rounded-md border border-rose-200 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/20 px-3 py-2 text-xs text-rose-700 dark:text-rose-300 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50/80 px-3.5 py-2.5 text-xs text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
               <span>{error}</span>
-              <button onClick={() => setError('')} className="p-1">
-                <X size={14} strokeWidth={1.25} />
+              <button onClick={() => setError('')} className="shrink-0 rounded-md p-1 hover:bg-rose-500/10" aria-label="Dismiss error">
+                <X size={14} strokeWidth={1.75} />
               </button>
             </div>
           )}
@@ -567,8 +605,8 @@ export default function Home() {
           {view === 'Settings' && <SettingsPage />}
         </div>
 
-        <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1.5 lg:hidden">
-          <div className="mx-auto flex max-w-lg items-center justify-between gap-1">
+        <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/90 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 lg:hidden">
+          <div className="mx-auto flex max-w-lg items-center justify-between gap-0.5">
             {mobileNavList.map((n) => {
               const Icon = icons[n];
               const active = view === n;
@@ -576,11 +614,13 @@ export default function Home() {
                 <button
                   key={n}
                   onClick={() => setView(n)}
-                  className={`flex flex-1 flex-col items-center gap-0.5 rounded-md px-1 py-1 text-[10px] transition ${
-                    active ? 'text-[var(--text)] font-medium' : 'text-[var(--text-muted)]'
+                  className={`flex min-h-12 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 text-[10px] font-medium transition active:scale-95 ${
+                    active
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                      : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
                   }`}
                 >
-                  <Icon size={16} strokeWidth={1.25} />
+                  <Icon size={18} strokeWidth={active ? 2.2 : 1.7} />
                   <span>{n}</span>
                 </button>
               );
@@ -591,7 +631,7 @@ export default function Home() {
         {notice && (
           <div
             role="status"
-            className="fixed bottom-20 right-4 z-40 rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs shadow-lg"
+            className="fixed bottom-24 left-1/2 z-40 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-slate-200 bg-white/95 px-4 py-3 text-xs font-medium text-slate-800 shadow-xl backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-100 lg:bottom-8"
           >
             {notice}
           </div>
@@ -607,11 +647,10 @@ export default function Home() {
                 openAddTask();
               }
             }}
-            className="fixed bottom-16 right-4 z-30 lg:bottom-6 lg:right-6 rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-sm flex items-center gap-1.5"
-            aria-label="Add transaction or task"
+            className="fixed bottom-24 right-4 z-30 grid h-14 w-14 place-items-center rounded-full bg-emerald-500 text-slate-950 shadow-xl shadow-emerald-500/30 transition hover:scale-105 hover:bg-emerald-400 active:scale-95 lg:bottom-8 lg:right-8"
+            aria-label={view === 'Tasks' ? 'Add task' : 'Add transaction'}
           >
-            <Plus size={16} strokeWidth={1.25} />
-            <span>{view === 'Tasks' ? 'Add Task' : 'Add'}</span>
+            <Plus size={22} strokeWidth={2.25} />
           </button>
         )}
       </main>
@@ -769,80 +808,127 @@ export default function Home() {
   );
 
   function Dashboard() {
+    const savingsRate = earned > 0 ? Math.max(0, Math.round((balance / earned) * 100)) : 0;
+    const recent = [...appData.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
+
     return (
-      <div className="space-y-5">
-        <section className="rounded-2xl border border-slate-200/80 dark:border-[var(--line)] bg-white dark:bg-[var(--surface)] p-5 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)]">Net Balance</p>
-              <h2 className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-[var(--text)]">{money(balance, userCurrency)}</h2>
-            </div>
-            <button onClick={openAddTransaction} className="rounded-lg border border-slate-200/80 dark:border-[var(--line)] px-3 py-1.5 text-sm flex items-center gap-1.5 hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200">
-              <Plus size={15} strokeWidth={1.25} />
-              <span>Quick Add</span>
-            </button>
+      <div className="space-y-5 sm:space-y-6">
+        <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
+              Financial overview
+            </p>
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+              Welcome back
+            </h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Here is how your money is moving right now.
+            </p>
           </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-slate-200/80 dark:border-[var(--line)] p-4 hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200">
-              <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)] flex items-center gap-1.5"><TrendingUp size={14} strokeWidth={1.25} /> Income</p>
-              <p className="mt-2 text-base font-medium text-zinc-900 dark:text-[var(--text)]">{money(earned, userCurrency)}</p>
-            </div>
-            <div className="rounded-xl border border-slate-200/80 dark:border-[var(--line)] p-4 hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200">
-              <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)] flex items-center gap-1.5"><TrendingDown size={14} strokeWidth={1.25} /> Spent</p>
-              <p className="mt-2 text-base font-medium text-zinc-900 dark:text-[var(--text)]">{money(spent, userCurrency)}</p>
-            </div>
-            <div className="rounded-xl border border-slate-200/80 dark:border-[var(--line)] p-4 hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200">
-              <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)] flex items-center gap-1.5"><ArrowUpRight size={14} strokeWidth={1.25} /> Net Saved</p>
-              <p className="mt-2 text-base font-medium text-zinc-900 dark:text-[var(--text)]">{money(balance, userCurrency)}</p>
-            </div>
-          </div>
+          <button onClick={openAddTransaction} className="btn-primary w-full sm:w-auto">
+            <Plus size={16} strokeWidth={2.25} /> Quick add
+          </button>
+        </section>
+
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard label="Net Balance" value={money(balance, userCurrency)} hint={`${savingsRate}% savings rate`} icon={WalletCards} tone="sky" />
+          <StatCard label="Income" value={money(earned, userCurrency)} hint={`${income.length} income entries`} icon={TrendingUp} tone="emerald" />
+          <StatCard label="Spent" value={money(spent, userCurrency)} hint={`${expenses.length} expense entries`} icon={TrendingDown} tone="rose" />
+          <StatCard label="Net Saved" value={money(balance, userCurrency)} hint={balance >= 0 ? 'On track this period' : 'Spending exceeds income'} icon={ArrowUpRight} tone="violet" />
         </section>
 
         <section className="grid gap-5 xl:grid-cols-[1.6fr_1fr]">
-          <div className="rounded-2xl border border-slate-200/80 dark:border-[var(--line)] bg-white dark:bg-[var(--surface)] p-5 shadow-sm">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="surface-card p-4 sm:p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-[var(--text)]">Spending Velocity</h3>
-                <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)]">Expense trend over time</p>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Spending Velocity</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Expense trend over time</p>
               </div>
               <select
                 value={spendingRange}
                 onChange={(e) => setSpendingRange(e.target.value as typeof spendingRange)}
-                className="rounded-lg border border-slate-200/80 dark:border-[var(--line)] bg-white dark:bg-[var(--surface)] px-2.5 py-1 text-xs hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200"
+                className="min-h-10 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 outline-none transition hover:border-slate-300 focus:border-emerald-500/60 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-200 dark:hover:border-slate-600"
               >
-                <option value="today">Today (1 Day)</option>
-                <option value="week">Last 7 Days</option>
-                <option value="month">This Month (1 Month)</option>
-                <option value="lastMonth">Last Month</option>
-                <option value="year">1 Year</option>
+                <option value="today">Today</option>
+                <option value="week">Last 7 days</option>
+                <option value="month">This month</option>
+                <option value="lastMonth">Last month</option>
+                <option value="year">1 year</option>
               </select>
             </div>
-            <Chart data={spending} />
+            <Chart data={spending} currency={userCurrency} />
           </div>
 
-          <div className="rounded-2xl border border-slate-200/80 dark:border-[var(--line)] bg-white dark:bg-[var(--surface)] p-5 shadow-sm flex flex-col">
-            <div className="flex items-center justify-between">
+          <div className="surface-card flex flex-col p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-[var(--text)]">Focus Queue</h3>
-                <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)]">Upcoming tasks</p>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Focus Queue</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Upcoming tasks</p>
               </div>
-              <button onClick={openAddTask} className="text-xs text-zinc-500 dark:text-[var(--text-muted)] flex items-center gap-1 hover:text-zinc-900 dark:hover:text-[var(--text)] transition-all duration-200">
-                <Plus size={13} strokeWidth={1.25} /> Add task
+              <button onClick={openAddTask} className="icon-btn" aria-label="Add task">
+                <Plus size={16} strokeWidth={2} />
               </button>
             </div>
-            <div className="mt-3 space-y-2 flex-1">
+            <div className="mt-4 flex-1 space-y-2.5">
               {pendingTasks.slice(0, 5).map((task) => (
-                <div key={task.id} className="flex items-center justify-between rounded-xl border border-slate-200/80 dark:border-[var(--line)] px-3 py-2 hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200">
-                  <div className="min-w-0">
-                    <p className="text-xs truncate text-zinc-900 dark:text-[var(--text)]">{task.title}</p>
-                    <p className="text-[11px] text-zinc-500 dark:text-[var(--text-muted)]">Due {task.dueDate}</p>
+                <div key={task.id} className="surface-inset flex items-center gap-3 px-3 py-2.5">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-slate-900 dark:text-slate-100">{task.title}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Due {task.dueDate}</p>
                   </div>
+                  <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold capitalize text-emerald-600 dark:text-emerald-400">
+                    {task.recurring === 'none' ? 'Once' : task.recurring}
+                  </span>
                 </div>
               ))}
-              {!pendingTasks.length && <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)] py-2">All clear</p>}
+              {!pendingTasks.length && (
+                <div className="grid min-h-32 place-items-center rounded-xl border border-dashed border-slate-200 px-4 text-center dark:border-slate-800">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">All clear. Nothing on your plate.</p>
+                </div>
+              )}
             </div>
-            <button onClick={() => setView('Tasks')} className="mt-3 text-xs text-zinc-500 dark:text-[var(--text-muted)] self-start hover:text-zinc-900 dark:hover:text-[var(--text)] transition-all duration-200">View all tasks →</button>
+            <button
+              onClick={() => setView('Tasks')}
+              className="mt-4 inline-flex min-h-10 items-center gap-1 self-start rounded-lg px-1 text-xs font-semibold text-emerald-600 transition hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300"
+            >
+              View all tasks <ArrowUpRight size={13} strokeWidth={2} />
+            </button>
           </div>
+        </section>
+
+        <section className="surface-card p-4 sm:p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Recent Activity</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Latest money movements</p>
+            </div>
+            <button onClick={() => setView('Transactions')} className="text-xs font-semibold text-emerald-600 transition hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300">
+              View all
+            </button>
+          </div>
+          {recent.length ? (
+            <div className="grid gap-2.5 md:grid-cols-2">
+              {recent.map((t) => (
+                <div key={t.id} className="surface-inset flex items-center gap-3 p-3">
+                  <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${t.kind === 'income' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'}`}>
+                    {t.kind === 'income' ? <TrendingUp size={16} strokeWidth={1.75} /> : <TrendingDown size={16} strokeWidth={1.75} />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-slate-900 dark:text-slate-100">{t.title}</p>
+                    <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{t.category} · {t.date}</p>
+                  </div>
+                  <p className={`shrink-0 text-xs font-semibold ${t.kind === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100'}`}>
+                    {t.kind === 'income' ? '+' : '-'}{money(t.amount, userCurrency)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+              No transactions yet. Add your first entry to get started.
+            </p>
+          )}
         </section>
       </div>
     );
@@ -851,53 +937,95 @@ export default function Home() {
   function Transactions() {
     const sorted = [...appData.transactions].sort((a, b) => b.date.localeCompare(a.date));
     return (
-      <section className="rounded-2xl border border-slate-200/80 dark:border-[var(--line)] bg-white dark:bg-[var(--surface)] p-5 shadow-sm">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+      <section className="surface-card p-4 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-[var(--text)]">Income and Expenses</h2>
-            <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)]">Transaction ledger</p>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Income and Expenses</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Your complete transaction ledger</p>
           </div>
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => downloadCsv(csv(appData.transactions))} className="rounded-lg border border-slate-200/80 dark:border-[var(--line)] px-2.5 py-1 text-xs flex items-center gap-1 hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200">
-              <Download size={13} strokeWidth={1.25} /> Export CSV
+          <div className="flex items-center gap-2">
+            <button onClick={() => downloadCsv(csv(appData.transactions))} className="btn-secondary flex-1 sm:flex-none">
+              <Download size={15} strokeWidth={1.75} /> Export CSV
             </button>
-            <button onClick={openAddTransaction} className="rounded-lg border border-slate-200/80 dark:border-[var(--line)] px-2.5 py-1 text-xs flex items-center gap-1 hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200">
-              <Plus size={13} strokeWidth={1.25} /> New
+            <button onClick={openAddTransaction} className="btn-primary flex-1 sm:flex-none">
+              <Plus size={15} strokeWidth={2} /> New
             </button>
           </div>
         </div>
+
         {sorted.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="text-zinc-500 dark:text-[var(--text-muted)]">
-                <tr>
-                  <th className="py-2 font-medium">Date</th>
-                  <th className="py-2 font-medium">Title</th>
-                  <th className="py-2 font-medium">Category</th>
-                  <th className="py-2 font-medium">Type</th>
-                  <th className="py-2 font-medium text-right">Amount</th>
-                  <th className="py-2 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((t) => (
-                  <tr key={t.id} className="border-t border-slate-200/80 dark:border-[var(--line)] hover:bg-slate-50/60 dark:hover:bg-[var(--surface-soft)] transition-all duration-200">
-                    <td className="py-2 text-zinc-500 dark:text-[var(--text-muted)]">{t.date}</td>
-                    <td className="py-2 text-zinc-900 dark:text-[var(--text)]">{t.title}</td>
-                    <td className="py-2 text-zinc-500 dark:text-[var(--text-muted)]">{t.category}</td>
-                    <td className="py-2 text-zinc-500 dark:text-[var(--text-muted)] capitalize">{t.kind}</td>
-                    <td className="py-2 text-right text-zinc-900 dark:text-[var(--text)]">{t.kind === 'income' ? '+' : '-'}{money(t.amount, userCurrency)}</td>
-                    <td className="py-2 text-right">
-                      <button onClick={() => setTransactionDraft(t)} className="p-1 hover:bg-slate-50 dark:hover:bg-[var(--surface-soft)] rounded-md transition-all duration-200"><Pencil size={13} strokeWidth={1.25} /></button>
-                      <button onClick={() => void deleteEntity('transaction', t.id)} className="p-1 hover:bg-slate-50 dark:hover:bg-[var(--surface-soft)] rounded-md transition-all duration-200"><Trash2 size={13} strokeWidth={1.25} /></button>
-                    </td>
+          <>
+            <div className="mt-5 hidden overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 md:block">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/80 text-[11px] uppercase tracking-wider text-slate-500 dark:bg-slate-950/50 dark:text-slate-400">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Date</th>
+                    <th className="px-4 py-3 font-semibold">Title</th>
+                    <th className="px-4 py-3 font-semibold">Category</th>
+                    <th className="px-4 py-3 font-semibold">Type</th>
+                    <th className="px-4 py-3 text-right font-semibold">Amount</th>
+                    <th className="px-4 py-3 text-right font-semibold">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {sorted.map((t) => (
+                    <tr key={t.id} className="border-t border-slate-200/80 transition hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-800/40">
+                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{t.date}</td>
+                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">{t.title}</td>
+                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{t.category}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${
+                          t.kind === 'income'
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                        }`}>
+                          {t.kind}
+                        </span>
+                      </td>
+                      <td className={`px-4 py-3 text-right font-semibold ${t.kind === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100'}`}>
+                        {t.kind === 'income' ? '+' : '-'}{money(t.amount, userCurrency)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end gap-1">
+                          <button onClick={() => setTransactionDraft(t)} className="icon-btn h-8 w-8" aria-label="Edit transaction"><Pencil size={14} strokeWidth={1.75} /></button>
+                          <button onClick={() => void deleteEntity('transaction', t.id)} className="icon-btn h-8 w-8 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400" aria-label="Delete transaction"><Trash2 size={14} strokeWidth={1.75} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-4 space-y-2.5 md:hidden">
+              {sorted.map((t) => (
+                <div key={t.id} className="surface-inset flex items-center gap-3 p-3">
+                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${t.kind === 'income' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'}`}>
+                    {t.kind === 'income' ? <TrendingUp size={17} strokeWidth={1.75} /> : <TrendingDown size={17} strokeWidth={1.75} />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">{t.title}</p>
+                    <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{t.category} · {t.date}</p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className={`text-sm font-semibold ${t.kind === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100'}`}>
+                      {t.kind === 'income' ? '+' : '-'}{money(t.amount, userCurrency)}
+                    </p>
+                    <div className="mt-1 flex justify-end gap-1">
+                      <button onClick={() => setTransactionDraft(t)} className="rounded-md p-1 text-slate-500 hover:bg-slate-200/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white" aria-label="Edit transaction"><Pencil size={13} strokeWidth={1.75} /></button>
+                      <button onClick={() => void deleteEntity('transaction', t.id)} className="rounded-md p-1 text-slate-500 hover:bg-rose-500/10 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400" aria-label="Delete transaction"><Trash2 size={13} strokeWidth={1.75} /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
-          <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)]">No transactions</p>
+          <div className="mt-5 rounded-xl border border-dashed border-slate-200 py-14 text-center dark:border-slate-800">
+            <ReceiptText size={28} className="mx-auto text-slate-300 dark:text-slate-600" strokeWidth={1.25} />
+            <p className="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No transactions yet</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Log your first income or expense to see it here.</p>
+          </div>
         )}
       </section>
     );
@@ -907,36 +1035,63 @@ export default function Home() {
     const month = today().slice(0, 7);
     return (
       <section>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-[var(--text)]">Budgets</h2>
-            <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)]">Category spending caps</p>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Budgets</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Category spending caps for this month</p>
           </div>
-          <button className="rounded-lg border border-slate-200/80 dark:border-[var(--line)] px-2.5 py-1 text-xs flex items-center gap-1 hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200" onClick={() => setBudgetDraftId('')}>
-            <Plus size={13} strokeWidth={1.25} /> Add
+          <button className="btn-primary w-full sm:w-auto" onClick={() => setBudgetDraftId('')}>
+            <Plus size={15} strokeWidth={2} /> Add budget
           </button>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {appData.budgets.map((b) => {
             const used = expenses.filter((e) => e.categoryId === b.categoryId && e.date.startsWith(month)).reduce((s, e) => s + e.amount, 0);
-            const ratio = b.limit > 0 ? Math.min(100, (used / b.limit) * 100) : 0;
+            const rawRatio = b.limit > 0 ? (used / b.limit) * 100 : 0;
+            const ratio = Math.min(100, rawRatio);
+            const over = rawRatio >= 100;
+            const warning = rawRatio >= 80 && !over;
             return (
-              <div className="rounded-2xl border border-slate-200/80 dark:border-[var(--line)] bg-white dark:bg-[var(--surface)] p-4 shadow-sm hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200" key={b.id}>
-                <div className="flex items-center justify-between">
-                  <b className="text-sm text-zinc-900 dark:text-[var(--text)]">{b.category}</b>
+              <div className="surface-card p-5 transition hover:border-slate-300 dark:hover:border-slate-700" key={b.id}>
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <button onClick={() => setBudgetDraftId(b.id)} className="p-1 hover:bg-slate-50 dark:hover:bg-[var(--surface-soft)] rounded-md transition-all duration-200"><Pencil size={13} strokeWidth={1.25} /></button>
-                    <button onClick={() => void deleteEntity('budget', b.id)} className="p-1 hover:bg-slate-50 dark:hover:bg-[var(--surface-soft)] rounded-md transition-all duration-200"><Trash2 size={13} strokeWidth={1.25} /></button>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{b.category}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {money(used, userCurrency)} of {money(b.limit, userCurrency)}
+                    </p>
                   </div>
+                  <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
+                    over
+                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                      : warning
+                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                  }`}>
+                    {over ? 'Over limit' : `${Math.round(rawRatio)}%`}
+                  </span>
                 </div>
-                <p className="mt-1.5 text-xs text-zinc-500 dark:text-[var(--text-muted)]">{money(used, userCurrency)} / {money(b.limit, userCurrency)}</p>
-                <div className="mt-2.5 h-1.5 rounded-full bg-slate-100 dark:bg-[var(--surface-soft)] overflow-hidden">
-                  <div className="h-full bg-zinc-900 dark:bg-[var(--text)]" style={{ width: `${ratio}%` }} />
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r ${
+                      over ? 'from-rose-500 to-rose-400' : warning ? 'from-amber-500 to-amber-400' : 'from-emerald-500 to-emerald-400'
+                    }`}
+                    style={{ width: `${ratio}%` }}
+                  />
+                </div>
+                <div className="mt-4 flex items-center justify-end gap-1 border-t border-slate-100 pt-3 dark:border-slate-800">
+                  <button onClick={() => setBudgetDraftId(b.id)} className="icon-btn h-8 w-8" aria-label="Edit budget"><Pencil size={14} strokeWidth={1.75} /></button>
+                  <button onClick={() => void deleteEntity('budget', b.id)} className="icon-btn h-8 w-8 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400" aria-label="Delete budget"><Trash2 size={14} strokeWidth={1.75} /></button>
                 </div>
               </div>
             );
           })}
-          {!appData.budgets.length && <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)]">No budgets</p>}
+          {!appData.budgets.length && (
+            <div className="col-span-full rounded-xl border border-dashed border-slate-200 py-14 text-center dark:border-slate-800">
+              <WalletCards size={28} className="mx-auto text-slate-300 dark:text-slate-600" strokeWidth={1.25} />
+              <p className="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No budgets yet</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Create a cap to keep each category in check.</p>
+            </div>
+          )}
         </div>
       </section>
     );
@@ -945,65 +1100,121 @@ export default function Home() {
   function Goals() {
     return (
       <section>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-[var(--text)]">Goals</h2>
-            <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)]">Savings milestones</p>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Goals</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Savings milestones you are working toward</p>
           </div>
-          <button className="rounded-lg border border-slate-200/80 dark:border-[var(--line)] px-2.5 py-1 text-xs flex items-center gap-1 hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200" onClick={() => setGoalDraft({ id: '', name: '', target: 0, saved: 0, targetDate: '' })}>
-            <Plus size={13} strokeWidth={1.25} /> Add
+          <button className="btn-primary w-full sm:w-auto" onClick={() => setGoalDraft({ id: '', name: '', target: 0, saved: 0, targetDate: '' })}>
+            <Plus size={15} strokeWidth={2} /> Add goal
           </button>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {appData.goals.map((g) => {
             const ratio = g.target > 0 ? Math.min(100, (g.saved / g.target) * 100) : 0;
             return (
-              <div className="rounded-2xl border border-slate-200/80 dark:border-[var(--line)] bg-white dark:bg-[var(--surface)] p-4 shadow-sm hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200" key={g.id}>
-                <div className="flex items-center justify-between">
-                  <b className="text-sm text-zinc-900 dark:text-[var(--text)]">{g.name}</b>
+              <div className="surface-card p-5 transition hover:border-slate-300 dark:hover:border-slate-700" key={g.id}>
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <button onClick={() => setGoalDraft(g)} className="p-1 hover:bg-slate-50 dark:hover:bg-[var(--surface-soft)] rounded-md transition-all duration-200"><Pencil size={13} strokeWidth={1.25} /></button>
-                    <button onClick={() => void deleteEntity('goal', g.id)} className="p-1 hover:bg-slate-50 dark:hover:bg-[var(--surface-soft)] rounded-md transition-all duration-200"><Trash2 size={13} strokeWidth={1.25} /></button>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{g.name}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {money(g.saved, userCurrency)} of {money(g.target, userCurrency)}
+                    </p>
                   </div>
+                  <span className="rounded-full bg-sky-500/10 px-2 py-1 text-[10px] font-semibold text-sky-600 dark:text-sky-400">
+                    {ratio.toFixed(0)}%
+                  </span>
                 </div>
-                <p className="mt-1.5 text-xs text-zinc-500 dark:text-[var(--text-muted)]">{money(g.saved, userCurrency)} / {money(g.target, userCurrency)} ({ratio.toFixed(0)}%)</p>
-                <div className="mt-2.5 h-1.5 rounded-full bg-slate-100 dark:bg-[var(--surface-soft)] overflow-hidden">
-                  <div className="h-full bg-zinc-900 dark:bg-[var(--text)]" style={{ width: `${ratio}%` }} />
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div className="h-full rounded-full bg-gradient-to-r from-sky-500 to-emerald-400" style={{ width: `${ratio}%` }} />
+                </div>
+                <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {g.targetDate ? `Target ${g.targetDate}` : 'No target date'}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setGoalDraft(g)} className="icon-btn h-8 w-8" aria-label="Edit goal"><Pencil size={14} strokeWidth={1.75} /></button>
+                    <button onClick={() => void deleteEntity('goal', g.id)} className="icon-btn h-8 w-8 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400" aria-label="Delete goal"><Trash2 size={14} strokeWidth={1.75} /></button>
+                  </div>
                 </div>
               </div>
             );
           })}
-          {!appData.goals.length && <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)]">No goals</p>}
+          {!appData.goals.length && (
+            <div className="col-span-full rounded-xl border border-dashed border-slate-200 py-14 text-center dark:border-slate-800">
+              <Target size={28} className="mx-auto text-slate-300 dark:text-slate-600" strokeWidth={1.25} />
+              <p className="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No goals yet</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Set a savings target and watch it grow.</p>
+            </div>
+          )}
         </div>
       </section>
     );
   }
 
   function TasksView() {
+    const open = appData.tasks.filter((t) => !t.completed);
+    const done = appData.tasks.filter((t) => t.completed);
     return (
-      <section className="rounded-2xl border border-slate-200/80 dark:border-[var(--line)] bg-white dark:bg-[var(--surface)] p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
+      <section className="surface-card p-4 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900 dark:text-[var(--text)]">Tasks</h2>
-            <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)]">Reminders and planner</p>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Tasks</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {open.length} open · {done.length} completed
+            </p>
           </div>
-          <button onClick={openAddTask} className="rounded-lg border border-slate-200/80 dark:border-[var(--line)] px-2.5 py-1 text-xs flex items-center gap-1 hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200">
-            <Plus size={13} strokeWidth={1.25} /> Add
+          <button onClick={openAddTask} className="btn-primary w-full sm:w-auto">
+            <Plus size={15} strokeWidth={2} /> Add task
           </button>
         </div>
-        <div className="space-y-2">
+        <div className="mt-5 space-y-2.5">
           {appData.tasks.map((t) => (
-            <label key={t.id} className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 dark:border-[var(--line)] px-3 py-2 hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200">
-              <input type="checkbox" checked={t.completed} onChange={() => updateTaskCompletion(t)} className="accent-zinc-900" />
+            <label
+              key={t.id}
+              className={`group flex items-center gap-3 rounded-xl border p-3.5 transition ${
+                t.completed
+                  ? 'border-slate-200/70 bg-slate-50/60 dark:border-slate-800/60 dark:bg-slate-950/30'
+                  : 'border-slate-200 bg-white hover:border-emerald-400/50 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-emerald-500/40'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={t.completed}
+                onChange={() => updateTaskCompletion(t)}
+                className="h-5 w-5 shrink-0 rounded border-slate-300 accent-emerald-500 dark:border-slate-600"
+              />
               <div className="min-w-0 flex-1">
-                <p className={`text-xs ${t.completed ? 'line-through text-zinc-500 dark:text-[var(--text-muted)]' : 'text-zinc-900 dark:text-[var(--text)]'}`}>{t.title}</p>
-                <p className="text-[11px] text-zinc-500 dark:text-[var(--text-muted)]">Due {t.dueDate}</p>
+                <p className={`truncate text-sm font-medium ${t.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-slate-100'}`}>
+                  {t.title}
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                  <span>Due {t.dueDate}</span>
+                  {t.recurring !== 'none' && (
+                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 font-medium capitalize dark:bg-slate-800">
+                      {t.recurring}
+                    </span>
+                  )}
+                  {t.reminder && (
+                    <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 font-medium text-amber-600 dark:text-amber-400">
+                      Reminder
+                    </span>
+                  )}
+                </div>
               </div>
-              <button onClick={(e) => { e.preventDefault(); setTaskDraft(t); }} className="p-1 hover:bg-slate-50 dark:hover:bg-[var(--surface-soft)] rounded-md transition-all duration-200"><Pencil size={13} strokeWidth={1.25} /></button>
-              <button onClick={(e) => { e.preventDefault(); void deleteEntity('task', t.id); }} className="p-1 hover:bg-slate-50 dark:hover:bg-[var(--surface-soft)] rounded-md transition-all duration-200"><Trash2 size={13} strokeWidth={1.25} /></button>
+              <div className="flex shrink-0 items-center gap-1">
+                <button onClick={(e) => { e.preventDefault(); setTaskDraft(t); }} className="icon-btn h-8 w-8" aria-label="Edit task"><Pencil size={14} strokeWidth={1.75} /></button>
+                <button onClick={(e) => { e.preventDefault(); void deleteEntity('task', t.id); }} className="icon-btn h-8 w-8 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400" aria-label="Delete task"><Trash2 size={14} strokeWidth={1.75} /></button>
+              </div>
             </label>
           ))}
-          {!appData.tasks.length && <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)]">No tasks</p>}
+          {!appData.tasks.length && (
+            <div className="rounded-xl border border-dashed border-slate-200 py-14 text-center dark:border-slate-800">
+              <CheckCircle2 size={28} className="mx-auto text-slate-300 dark:text-slate-600" strokeWidth={1.25} />
+              <p className="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No tasks yet</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Add a reminder to stay on top of your money goals.</p>
+            </div>
+          )}
         </div>
       </section>
     );
@@ -1020,6 +1231,7 @@ export default function Home() {
     const startDayOfWeek = firstDay.getDay();
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
     const blanks = Array.from({ length: startDayOfWeek }, (_, i) => i);
+    const monthLabel = now.toLocaleDateString('en', { month: 'long', year: 'numeric' });
 
     const dailyExpenseMap = useMemo(() => {
       const map = new Map<string, number>();
@@ -1032,14 +1244,19 @@ export default function Home() {
     const selectedDateTxns = selectedDate ? appData.transactions.filter((t) => t.date === selectedDate) : [];
 
     return (
-      <section className="rounded-2xl border border-slate-200/80 dark:border-[var(--line)] bg-white dark:bg-[var(--surface)] p-5 shadow-sm">
-        <div className="mb-4">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-[var(--text)]">Calendar</h2>
-          <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)]">Daily expense summary</p>
+      <section className="surface-card p-4 sm:p-6">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Calendar</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{monthLabel} · Daily expense summary</p>
+          </div>
+          <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+            This month
+          </span>
         </div>
-        <div className="grid grid-cols-7 gap-1 text-center text-xs">
+        <div className="grid grid-cols-7 gap-1.5 text-center sm:gap-2">
           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-            <div key={i} className="py-1.5 text-zinc-500 dark:text-[var(--text-muted)]">{d}</div>
+            <div key={i} className="py-1.5 text-[11px] font-semibold uppercase text-slate-400 dark:text-slate-500">{d}</div>
           ))}
           {blanks.map((b) => <div key={`b${b}`} />)}
           {days.map((day) => {
@@ -1047,31 +1264,59 @@ export default function Home() {
             const total = dailyExpenseMap.get(dateStr) || 0;
             const isToday = dateStr === today();
             return (
-              <button key={day} onClick={() => setSelectedDate(dateStr)} className={`min-h-[56px] rounded-xl border border-slate-200/80 dark:border-[var(--line)] p-1.5 text-left hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200 ${isToday ? 'bg-slate-50/60 dark:bg-[var(--surface-soft)]' : ''}`}>
-                <div className="text-[11px] text-zinc-900 dark:text-[var(--text)]">{day}</div>
-                {total > 0 && <div className="mt-auto text-[10px] text-zinc-500 dark:text-[var(--text-muted)]">-{money(total, userCurrency)}</div>}
+              <button
+                key={day}
+                onClick={() => setSelectedDate(dateStr)}
+                className={`flex min-h-16 flex-col rounded-xl border p-1.5 text-left transition active:scale-95 sm:min-h-20 sm:p-2 ${
+                  isToday
+                    ? 'border-emerald-500/60 bg-emerald-500/5 ring-1 ring-emerald-500/20'
+                    : 'border-slate-200 bg-white/60 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-slate-700'
+                }`}
+              >
+                <span className={`text-[11px] font-semibold ${isToday ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                  {day}
+                </span>
+                {total > 0 && (
+                  <span className="mt-auto truncate text-[9px] font-medium text-rose-500 dark:text-rose-400 sm:text-[10px]">
+                    -{money(total, userCurrency)}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
 
         {selectedDate && (
-          <div className="fixed inset-0 z-50 grid place-items-end sm:place-items-center bg-slate-950/40 p-3" onClick={() => setSelectedDate(null)}>
-            <div className="w-full max-w-sm rounded-2xl border border-slate-200/80 dark:border-[var(--line)] bg-white dark:bg-[var(--surface)] shadow-md" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200/80 dark:border-[var(--line)]">
-                <p className="text-xs font-medium text-zinc-900 dark:text-[var(--text)]">{selectedDate}</p>
-                <button onClick={() => setSelectedDate(null)} className="p-1 hover:bg-slate-50 dark:hover:bg-[var(--surface-soft)] rounded-md transition-all duration-200"><X size={14} strokeWidth={1.25} /></button>
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setSelectedDate(null)}>
+            <div
+              className="w-full max-w-md rounded-t-2xl border border-slate-200 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl sm:p-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{selectedDate}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {selectedDateTxns.length} transaction{selectedDateTxns.length === 1 ? '' : 's'}
+                  </p>
+                </div>
+                <button onClick={() => setSelectedDate(null)} className="icon-btn" aria-label="Close day summary"><X size={16} strokeWidth={1.75} /></button>
               </div>
-              <div className="p-3 space-y-1.5 max-h-[50vh] overflow-auto">
+              <div className="mt-3 max-h-[55vh] space-y-2 overflow-auto">
                 {selectedDateTxns.length ? selectedDateTxns.map((t) => (
-                  <div key={t.id} className="flex justify-between rounded-xl border border-slate-200/80 dark:border-[var(--line)] px-3 py-2 hover:border-slate-300 dark:hover:border-[var(--text-muted)] transition-all duration-200">
-                    <div>
-                      <p className="text-xs text-zinc-900 dark:text-[var(--text)]">{t.title}</p>
-                      <p className="text-[11px] text-zinc-500 dark:text-[var(--text-muted)]">{t.category}</p>
+                  <div key={t.id} className="surface-inset flex items-center justify-between gap-3 px-3 py-2.5">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium text-slate-900 dark:text-slate-100">{t.title}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">{t.category}</p>
                     </div>
-                    <span className="text-xs text-zinc-900 dark:text-[var(--text)]">{t.kind === 'income' ? '+' : '-'}{money(t.amount, userCurrency)}</span>
+                    <span className={`shrink-0 text-xs font-semibold ${t.kind === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100'}`}>
+                      {t.kind === 'income' ? '+' : '-'}{money(t.amount, userCurrency)}
+                    </span>
                   </div>
-                )) : <p className="text-xs text-zinc-500 dark:text-[var(--text-muted)] p-2">No transactions</p>}
+                )) : (
+                  <p className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                    No transactions on this day.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -1082,27 +1327,67 @@ export default function Home() {
 
   function Reports() {
     const groups = categories.map((c) => ({ category: c.name, total: expenses.filter((e) => e.categoryId === c.id || e.category.toLowerCase() === c.name.toLowerCase()).reduce((sum, e) => sum + e.amount, 0) })).filter((x) => x.total > 0);
+    const savingsRate = earned > 0 ? Math.max(0, Math.round((balance / earned) * 100)) : 0;
     return (
-      <section className="grid gap-3 lg:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 dark:border-[var(--line)] p-4">
-          <h2 className="text-sm font-medium mb-2">Spending by Category</h2>
-          {groups.map((g) => (
-            <div key={g.category} className="mb-2">
-              <div className="flex justify-between text-xs"><span>{g.category}</span><span>{money(g.total, userCurrency)}</span></div>
-              <div className="mt-1 h-1.5 rounded-full bg-[var(--surface-soft)] overflow-hidden">
-                <div className="h-full bg-[var(--text)] opacity-60" style={{ width: `${Math.min(100, (g.total / (spent || 1)) * 100)}%` }} />
-              </div>
+      <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div className="surface-card p-5">
+          <div className="mb-5 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white">Spending by Category</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Where your money goes</p>
             </div>
-          ))}
-          {!groups.length && <p className="text-xs text-[var(--text-muted)]">No data</p>}
-        </div>
-        <div className="rounded-lg border border-slate-200 dark:border-[var(--line)] p-4">
-          <h2 className="text-sm font-medium mb-2">Analytics</h2>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded-md border border-slate-200 dark:border-[var(--line)] p-2"><p className="text-[var(--text-muted)]">Transactions</p><p className="text-sm font-medium">{appData.transactions.length}</p></div>
-            <div className="rounded-md border border-slate-200 dark:border-[var(--line)] p-2"><p className="text-[var(--text-muted)]">Savings Rate</p><p className="text-sm font-medium">{earned > 0 ? `${Math.max(0, Math.round((balance / earned) * 100))}%` : '0%'}</p></div>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              {groups.length} categories
+            </span>
           </div>
-          <button onClick={() => downloadCsv(csv(appData.transactions))} className="mt-3 w-full rounded-md border border-slate-200 dark:border-[var(--line)] px-2 py-1 text-xs flex items-center justify-center gap-1"><Download size={13} strokeWidth={1.25} /> Download CSV</button>
+          <div className="space-y-4">
+            {groups.map((g) => {
+              const pct = Math.min(100, (g.total / (spent || 1)) * 100);
+              return (
+                <div key={g.category}>
+                  <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
+                    <span className="font-medium text-slate-700 dark:text-slate-200">{g.category}</span>
+                    <span className="shrink-0 text-slate-500 dark:text-slate-400">{money(g.total, userCurrency)} · {Math.round(pct)}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                    <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-sky-400" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+            {!groups.length && (
+              <p className="rounded-xl border border-dashed border-slate-200 py-10 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                No spending data yet.
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="surface-card p-5">
+          <div className="mb-5">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Analytics</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">A quick snapshot of your activity</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="surface-inset p-4">
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Transactions</p>
+              <p className="mt-1.5 text-xl font-semibold text-slate-900 dark:text-white">{appData.transactions.length}</p>
+            </div>
+            <div className="surface-inset p-4">
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Savings Rate</p>
+              <p className="mt-1.5 text-xl font-semibold text-emerald-600 dark:text-emerald-400">{savingsRate}%</p>
+            </div>
+            <div className="surface-inset p-4">
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Income</p>
+              <p className="mt-1.5 text-sm font-semibold text-slate-900 dark:text-white">{money(earned, userCurrency)}</p>
+            </div>
+            <div className="surface-inset p-4">
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Spent</p>
+              <p className="mt-1.5 text-sm font-semibold text-slate-900 dark:text-white">{money(spent, userCurrency)}</p>
+            </div>
+          </div>
+          <button onClick={() => downloadCsv(csv(appData.transactions))} className="btn-secondary mt-5 w-full">
+            <Download size={15} strokeWidth={1.75} /> Download CSV
+          </button>
         </div>
       </section>
     );
@@ -1131,27 +1416,136 @@ export default function Home() {
     }
 
     return (
-      <div className="space-y-3">
-        <div className="rounded-lg border border-slate-200 dark:border-[var(--line)] p-4">
-          <h3 className="text-sm font-medium">Profile</h3>
-          <form onSubmit={handleSaveProfile} className="mt-2 space-y-2">
-            <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" value={activeUser?.email ?? ''} disabled />
-            <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Display name" />
-            <select className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" value={selectedCurrency} onChange={(e) => setSelectedCurrency(e.target.value)}>
-              {SUPPORTED_CURRENCIES.map((curr) => <option key={curr.code} value={curr.code}>{curr.code}</option>)}
-            </select>
-            <button type="submit" disabled={saving} className="rounded-md border border-slate-200 dark:border-[var(--line)] px-2.5 py-1 text-xs">{saving ? 'Saving...' : 'Save'}</button>
+      <div className="space-y-5">
+        <div className="surface-card p-5 sm:p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <User size={20} strokeWidth={1.75} />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">Profile</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Manage your account and display preferences</p>
+            </div>
+          </div>
+          <form onSubmit={handleSaveProfile} className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Email address</label>
+              <input className="field opacity-70" value={activeUser?.email ?? ''} disabled />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Display name</label>
+              <input className="field" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Display name" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Preferred currency</label>
+              <select className="field" value={selectedCurrency} onChange={(e) => setSelectedCurrency(e.target.value)}>
+                {SUPPORTED_CURRENCIES.map((curr) => (
+                  <option key={curr.code} value={curr.code}>{curr.code} · {curr.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex sm:col-span-2 sm:justify-end">
+              <button type="submit" disabled={saving} className="btn-primary w-full sm:w-auto">
+                {saving ? 'Saving...' : 'Save changes'}
+              </button>
+            </div>
           </form>
         </div>
-        <div className="rounded-lg border border-slate-200 dark:border-[var(--line)] p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">Help & Support</h3>
-            <button onClick={() => setShowSupportModal(true)} className="rounded-md border border-slate-200 dark:border-[var(--line)] px-2 py-1 text-xs flex items-center gap-1"><MessageSquare size={13} strokeWidth={1.25} /> Contact</button>
+
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="surface-card flex flex-col p-5">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                <MessageSquare size={18} strokeWidth={1.75} />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Help & Support</h3>
+            </div>
+            <p className="mt-3 flex-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              Need a hand with budgets, exports, or your account? Our support team usually replies within 24 hours.
+            </p>
+            <button onClick={() => setShowSupportModal(true)} className="btn-secondary mt-4 w-full">
+              <MessageSquare size={15} strokeWidth={1.75} /> Contact support
+            </button>
+          </div>
+
+          <div className="surface-card flex flex-col p-5">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 size={18} strokeWidth={1.75} />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Data & Privacy</h3>
+            </div>
+            <p className="mt-3 flex-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              Your financial records are private to your account and protected with row level security.
+            </p>
+            <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              Securely synced and encrypted in transit
+            </div>
           </div>
         </div>
       </div>
     );
   }
+}
+
+const statTones = {
+  emerald: {
+    badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    bar: 'from-emerald-500 to-emerald-400',
+    dot: 'bg-emerald-500',
+  },
+  rose: {
+    badge: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+    bar: 'from-rose-500 to-rose-400',
+    dot: 'bg-rose-500',
+  },
+  sky: {
+    badge: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+    bar: 'from-sky-500 to-sky-400',
+    dot: 'bg-sky-500',
+  },
+  violet: {
+    badge: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+    bar: 'from-violet-500 to-violet-400',
+    dot: 'bg-violet-500',
+  },
+} as const;
+
+function StatCard({
+  label,
+  value,
+  hint,
+  icon: Icon,
+  tone,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  icon: React.ElementType;
+  tone: keyof typeof statTones;
+}) {
+  const colors = statTones[tone];
+  return (
+    <div className="surface-card relative overflow-hidden p-4 sm:p-5">
+      <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${colors.bar} opacity-80`} />
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
+          <p className="mt-2 truncate text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+            {value}
+          </p>
+        </div>
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${colors.badge}`}>
+          <Icon size={18} strokeWidth={1.75} />
+        </span>
+      </div>
+      <p className="mt-3 flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+        <span className={`h-1.5 w-1.5 rounded-full ${colors.dot}`} />
+        {hint}
+      </p>
+    </div>
+  );
 }
 
 function FaqItem({ question, answer }: { question: string; answer: string }) {
@@ -1187,21 +1581,36 @@ function TransactionModal({ draft, data, currency, onClose, onSave }: { draft: T
 
   return (
     <Modal title={draft.id ? 'Edit Transaction' : 'Add Transaction'} close={onClose}>
-      <form className="space-y-2" onSubmit={async (e) => { e.preventDefault(); setSaving(true); setError(''); try { await onSave(value); } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); } finally { setSaving(false); } }}>
-        <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" value={value.title} onChange={(e) => setValue({ ...value, title: e.target.value })} placeholder="Title" required />
-        <div className="grid grid-cols-2 gap-2">
-          <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" type="number" value={value.amount || ''} onChange={(e) => setValue({ ...value, amount: Number(e.target.value) })} placeholder={`Amount (${currency})`} required />
-          <select className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" value={value.kind} onChange={(e) => handleKindChange(e.target.value as Transaction['kind'])}>
-            <option value="expense">Expense</option>
-            <option value="income">Income</option>
+      <form className="space-y-3.5" onSubmit={async (e) => { e.preventDefault(); setSaving(true); setError(''); try { await onSave(value); } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); } finally { setSaving(false); } }}>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Title</label>
+          <input className="field" value={value.title} onChange={(e) => setValue({ ...value, title: e.target.value })} placeholder="e.g. Grocery run" required />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Amount ({currency})</label>
+            <input className="field" type="number" value={value.amount || ''} onChange={(e) => setValue({ ...value, amount: Number(e.target.value) })} placeholder="0" required />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Type</label>
+            <select className="field" value={value.kind} onChange={(e) => handleKindChange(e.target.value as Transaction['kind'])}>
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Category</label>
+          <select className="field" value={value.category} onChange={(e) => setValue({ ...value, category: e.target.value })}>
+            {categoryOptions.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
           </select>
         </div>
-        <select className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" value={value.category} onChange={(e) => setValue({ ...value, category: e.target.value })}>
-          {categoryOptions.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
-        </select>
-        <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" type="date" value={value.date} onChange={(e) => setValue({ ...value, date: e.target.value })} required />
-        {error && <p className="text-xs text-rose-600">{error}</p>}
-        <button className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] px-2 py-1 text-xs" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Date</label>
+          <input className="field" type="date" value={value.date} onChange={(e) => setValue({ ...value, date: e.target.value })} required />
+        </div>
+        {error && <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
+        <button className="btn-primary w-full" disabled={saving}>{saving ? 'Saving...' : 'Save transaction'}</button>
       </form>
     </Modal>
   );
@@ -1213,18 +1622,32 @@ function TaskModal({ draft, onClose, onSave }: { draft: Task; onClose: () => voi
   const [error, setError] = useState('');
   return (
     <Modal title={draft.id ? 'Edit Task' : 'Add Task'} close={onClose}>
-      <form className="space-y-2" onSubmit={async (e) => { e.preventDefault(); setSaving(true); setError(''); try { await onSave(value); } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); } finally { setSaving(false); } }}>
-        <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" value={value.title} onChange={(e) => setValue({ ...value, title: e.target.value })} placeholder="Title" required />
-        <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" type="date" value={value.dueDate} onChange={(e) => setValue({ ...value, dueDate: e.target.value })} required />
-        <select className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" value={value.recurring} onChange={(e) => setValue({ ...value, recurring: e.target.value as Task['recurring'] })}>
-          <option value="none">One-time</option>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-        </select>
-        <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={value.reminder} onChange={(e) => setValue({ ...value, reminder: e.target.checked })} /> Reminder</label>
-        {error && <p className="text-xs text-rose-600">{error}</p>}
-        <button className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] px-2 py-1 text-xs" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+      <form className="space-y-3.5" onSubmit={async (e) => { e.preventDefault(); setSaving(true); setError(''); try { await onSave(value); } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); } finally { setSaving(false); } }}>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Task title</label>
+          <input className="field" value={value.title} onChange={(e) => setValue({ ...value, title: e.target.value })} placeholder="e.g. Review monthly budget" required />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Due date</label>
+            <input className="field" type="date" value={value.dueDate} onChange={(e) => setValue({ ...value, dueDate: e.target.value })} required />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Repeat</label>
+            <select className="field" value={value.recurring} onChange={(e) => setValue({ ...value, recurring: e.target.value as Task['recurring'] })}>
+              <option value="none">One-time</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+        </div>
+        <label className="flex min-h-11 items-center gap-2.5 rounded-xl border border-slate-200 px-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
+          <input type="checkbox" checked={value.reminder} onChange={(e) => setValue({ ...value, reminder: e.target.checked })} className="h-4 w-4 rounded accent-emerald-500" />
+          Enable reminder
+        </label>
+        {error && <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
+        <button className="btn-primary w-full" disabled={saving}>{saving ? 'Saving...' : 'Save task'}</button>
       </form>
     </Modal>
   );
@@ -1238,14 +1661,23 @@ function BudgetModal({ draft, categories, currency, onClose, onSave }: { draft: 
   const [error, setError] = useState('');
   return (
     <Modal title={draft ? 'Edit Budget' : 'Add Budget'} close={onClose}>
-      <form className="space-y-2" onSubmit={async (e) => { e.preventDefault(); setSaving(true); setError(''); try { await onSave({ categoryId, limit, month }); } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); } finally { setSaving(false); } }}>
-        <select className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" type="number" value={limit || ''} onChange={(e) => setLimit(Number(e.target.value))} placeholder={`Limit (${currency})`} required />
-        <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" type="month" value={month} onChange={(e) => setMonth(e.target.value)} required />
-        {error && <p className="text-xs text-rose-600">{error}</p>}
-        <button className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] px-2 py-1 text-xs" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+      <form className="space-y-3.5" onSubmit={async (e) => { e.preventDefault(); setSaving(true); setError(''); try { await onSave({ categoryId, limit, month }); } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); } finally { setSaving(false); } }}>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Category</label>
+          <select className="field" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Monthly limit ({currency})</label>
+          <input className="field" type="number" value={limit || ''} onChange={(e) => setLimit(Number(e.target.value))} placeholder="0" required />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Month</label>
+          <input className="field" type="month" value={month} onChange={(e) => setMonth(e.target.value)} required />
+        </div>
+        {error && <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
+        <button className="btn-primary w-full" disabled={saving}>{saving ? 'Saving...' : 'Save budget'}</button>
       </form>
     </Modal>
   );
@@ -1257,15 +1689,27 @@ function GoalModal({ draft, currency, onClose, onSave }: { draft: Goal; currency
   const [error, setError] = useState('');
   return (
     <Modal title={draft.id ? 'Edit Goal' : 'Add Goal'} close={onClose}>
-      <form className="space-y-2" onSubmit={async (e) => { e.preventDefault(); setSaving(true); setError(''); try { await onSave(value); } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); } finally { setSaving(false); } }}>
-        <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" value={value.name} onChange={(e) => setValue({ ...value, name: e.target.value })} placeholder="Name" required />
-        <div className="grid grid-cols-2 gap-2">
-          <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" type="number" value={value.target || ''} onChange={(e) => setValue({ ...value, target: Number(e.target.value) })} placeholder="Target" required />
-          <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" type="number" value={value.saved || ''} onChange={(e) => setValue({ ...value, saved: Number(e.target.value) })} placeholder="Saved" required />
+      <form className="space-y-3.5" onSubmit={async (e) => { e.preventDefault(); setSaving(true); setError(''); try { await onSave(value); } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); } finally { setSaving(false); } }}>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Goal name</label>
+          <input className="field" value={value.name} onChange={(e) => setValue({ ...value, name: e.target.value })} placeholder="e.g. Emergency fund" required />
         </div>
-        <input className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)] px-2 py-1 text-xs" type="date" value={value.targetDate ?? ''} onChange={(e) => setValue({ ...value, targetDate: e.target.value })} />
-        {error && <p className="text-xs text-rose-600">{error}</p>}
-        <button className="w-full rounded-md border border-slate-200 dark:border-[var(--line)] px-2 py-1 text-xs" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Target ({currency})</label>
+            <input className="field" type="number" value={value.target || ''} onChange={(e) => setValue({ ...value, target: Number(e.target.value) })} placeholder="0" required />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Saved ({currency})</label>
+            <input className="field" type="number" value={value.saved || ''} onChange={(e) => setValue({ ...value, saved: Number(e.target.value) })} placeholder="0" required />
+          </div>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Target date</label>
+          <input className="field" type="date" value={value.targetDate ?? ''} onChange={(e) => setValue({ ...value, targetDate: e.target.value })} />
+        </div>
+        {error && <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
+        <button className="btn-primary w-full" disabled={saving}>{saving ? 'Saving...' : 'Save goal'}</button>
       </form>
     </Modal>
   );
@@ -1273,13 +1717,19 @@ function GoalModal({ draft, currency, onClose, onSave }: { draft: Goal; currency
 
 function Modal({ title, close, children }: { title: string; close: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-3">
-      <div className="w-full max-w-sm rounded-lg border border-slate-200 dark:border-[var(--line)] bg-[var(--surface)]">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-[var(--line)]">
-          <h2 className="text-sm font-medium">{title}</h2>
-          <button onClick={close}><X size={14} strokeWidth={1.25} /></button>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/70 backdrop-blur-sm sm:items-center sm:p-4" onClick={close}>
+      <div
+        className="w-full max-w-md rounded-t-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:rounded-2xl"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 dark:border-slate-800 sm:px-5">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{title}</h2>
+          <button onClick={close} className="icon-btn h-8 w-8" aria-label="Close dialog"><X size={16} strokeWidth={1.75} /></button>
         </div>
-        <div className="p-3">{children}</div>
+        <div className="max-h-[80vh] overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-5">{children}</div>
       </div>
     </div>
   );

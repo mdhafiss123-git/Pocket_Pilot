@@ -1,39 +1,40 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
 	:root {
 		--font-body: "Inter", "Avenir Next", "Manrope", "Segoe UI", sans-serif;
 		--font-display: "Inter", "Sora", "Trebuchet MS", sans-serif;
-		--bg: #f8f9fa;
+		--bg: #f8fafc;
 		--bg-elevated: #ffffff;
 		--surface: #ffffff;
-		--surface-soft: #f9fafb;
+		--surface-soft: #f1f5f9;
 		--surface-strong: #ffffff;
-		--line: rgba(148, 163, 184, 0.4);
-		--text: #18181b;
-		--text-muted: #71717a;
-		--brand: #18181b;
-		--brand-strong: #09090b;
-		--danger: #dc2626;
+		--line: rgba(148, 163, 184, 0.35);
+		--text: #0f172a;
+		--text-muted: #64748b;
+		--brand: #0f172a;
+		--brand-strong: #020617;
+		--danger: #e11d48;
 		--shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 		--radius-lg: 0.75rem;
 		--radius-md: 0.5rem;
 	}
 
 	.dark {
-		--bg: #09090b;
-		--bg-elevated: #101012;
-		--surface: #101012;
-		--surface-soft: #18181b;
-		--surface-strong: #101012;
-		--line: rgba(63, 63, 70, 0.8);
-		--text: #fafafa;
-		--text-muted: #a1a1aa;
-		--brand: #fafafa;
+		--bg: #020617;
+		--bg-elevated: #0f172a;
+		--surface: #0f172a;
+		--surface-soft: #1e293b;
+		--surface-strong: #0f172a;
+		--line: rgba(51, 65, 85, 0.8);
+		--text: #f1f5f9;
+		--text-muted: #94a3b8;
+		--brand: #f1f5f9;
 		--brand-strong: #ffffff;
-		--danger: #f87171;
-		--shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+		--danger: #fb7185;
+		--shadow: 0 20px 45px -20px rgb(0 0 0 / 0.75);
 	}
 
 	* {
@@ -45,13 +46,31 @@
 		min-height: 100%;
 	}
 
+	html {
+		-webkit-tap-highlight-color: transparent;
+		scroll-behavior: smooth;
+	}
+
 	body {
 		color: var(--text);
 		background:
-			radial-gradient(circle at 100% -10%, rgba(63, 134, 255, 0.2), transparent 40%),
-			radial-gradient(circle at -6% 10%, rgba(19, 186, 140, 0.18), transparent 35%),
+			radial-gradient(circle at 100% -10%, rgba(56, 189, 248, 0.12), transparent 38%),
+			radial-gradient(circle at -6% 10%, rgba(16, 185, 129, 0.1), transparent 36%),
 			linear-gradient(160deg, var(--bg), var(--bg-elevated));
+		background-attachment: fixed;
 		@apply antialiased;
+	}
+
+	.dark body {
+		background:
+			radial-gradient(ellipse at 100% -10%, rgba(16, 185, 129, 0.12), transparent 42%),
+			radial-gradient(ellipse at -10% 8%, rgba(56, 189, 248, 0.1), transparent 40%),
+			#020617;
+	}
+
+	::selection {
+		background: rgba(16, 185, 129, 0.3);
+		color: #f8fafc;
 	}
 
 	button,
@@ -61,14 +80,42 @@
 	textarea {
 		@apply transition;
 	}
+
+	button {
+		cursor: pointer;
+	}
+
+	:focus-visible {
+		outline: 2px solid rgba(16, 185, 129, 0.7);
+		outline-offset: 2px;
+	}
+
+	::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: rgba(100, 116, 139, 0.35);
+		border-radius: 9999px;
+	}
+
+	.dark ::-webkit-scrollbar-thumb {
+		background: rgba(71, 85, 105, 0.7);
+	}
 }
 
 @layer components {
 	.card {
-		background: var(--surface);
+		background: color-mix(in srgb, var(--surface) 88%, transparent);
 		border: 1px solid var(--line);
-		border-radius: var(--radius-lg);
+		border-radius: 0.875rem;
 		box-shadow: var(--shadow);
+		backdrop-filter: blur(16px);
 		@apply p-5;
 	}
 
@@ -79,12 +126,29 @@
 		@apply p-4;
 	}
 
+	/* Refined dark elevated surface used across the app */
+	.surface-card {
+		@apply rounded-xl border border-slate-200 bg-white shadow-sm transition-colors dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-lg dark:shadow-black/20 dark:backdrop-blur;
+	}
+
+	.surface-inset {
+		@apply rounded-xl border border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-950/40;
+	}
+
+	.text-primary {
+		@apply text-slate-900 dark:text-slate-100;
+	}
+
+	.text-muted {
+		@apply text-slate-500 dark:text-slate-400;
+	}
+
 	.field {
 		background: var(--surface-strong);
 		border: 1px solid var(--line);
 		color: var(--text);
-		border-radius: 0.5rem;
-		@apply w-full px-3 py-2 text-sm outline-none;
+		border-radius: 0.75rem;
+		@apply w-full px-3.5 py-2.5 text-sm outline-none;
 	}
 
 	.field::placeholder {
@@ -92,15 +156,20 @@
 	}
 
 	.field:focus {
-		border-color: var(--text-muted);
+		border-color: rgba(16, 185, 129, 0.65);
+		box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.14);
 		outline: none;
 	}
 
+	.dark .field {
+		background: rgba(2, 6, 23, 0.55);
+	}
+
 	.btn {
-		border-radius: 0.5rem;
+		border-radius: 0.75rem;
 		background: var(--brand);
 		color: var(--bg);
-		@apply inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium;
+		@apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold shadow-sm;
 	}
 
 	.btn:hover {
@@ -109,6 +178,14 @@
 
 	.btn:disabled {
 		@apply cursor-not-allowed opacity-50;
+	}
+
+	.btn-primary {
+		@apply inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50;
+	}
+
+	.btn-secondary {
+		@apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
 	}
 
 	.btn-ghost {
@@ -120,6 +197,10 @@
 
 	.btn-ghost:hover {
 		background: var(--surface-soft);
+	}
+
+	.icon-btn {
+		@apply grid h-9 w-9 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white;
 	}
 
 	.metric-value {
