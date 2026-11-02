@@ -1,5 +1,6 @@
 import './globals.css';
 import PWARegister from '@/components/PWARegister';
+import OfflineIndicator from '@/components/OfflineIndicator';
 import type { Metadata, Viewport } from 'next';
 
 export const metadata: Metadata = {
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 					}}
 				/>
 				<PWARegister />
+				<OfflineIndicator />
 				{children}
 			</body>
 		</html>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import {
   ArrowUpRight,
@@ -32,6 +32,14 @@ import SignOutModal from '@/components/SignOutModal';
 import HelpSupportModal from '@/components/HelpSupportModal';
 import { LogoutIcon, PocketPilotLogo } from '@/components/Icons';
 import { csv, downloadCsv } from '@/lib/export';
+import {
+  clearOfflineQueue,
+  enqueueOfflineTransaction,
+  readOfflineQueue,
+  updateOfflineTransaction,
+  writeOfflineQueue,
+  type QueuedTransaction,
+} from '@/lib/offline-queue';
 import { Category, Data, Goal, Profile, Task, Transaction } from '@/lib/types';
 import {
   budgetSchema,
@@ -122,6 +130,7 @@ export default function Home() {
   const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const offlineSyncInFlight = useRef(false);
 
   const [view, setView] = useState<View>('Dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -234,6 +243,51 @@ export default function Home() {
     setTimeout(() => setNotice(''), 3000);
   }
 
+  function applyLocalTransaction(
+    draft: Transaction,
+    values: Pick<Transaction, 'title' | 'amount' | 'kind' | 'category' | 'date' | 'notes'>,
+    optimisticId?: string
+  ) {
+    setData((previous) => {
+      if (!previous) return previous;
+
+      const categoryId = resolveCategoryId(values.category) ?? draft.categoryId;
+
+      if (draft.id) {
+        return {
+          ...previous,
+          transactions: previous.transactions.map((transaction) =>
+            transaction.id === draft.id
+              ? {
+                  ...transaction,
+                  title: values.title,
+                  amount: values.amount,
+                  kind: values.kind,
+                  category: values.category,
+                  categoryId,
+                  date: values.date,
+                  notes: values.notes,
+                }
+              : transaction
+          ),
+        };
+      }
+
+      const optimistic: Transaction = {
+        id: `offline-${optimisticId ?? Date.now()}`,
+        title: values.title,
+        amount: values.amount,
+        kind: values.kind,
+        category: values.category,
+        categoryId,
+        date: values.date,
+        notes: values.notes,
+      };
+
+      return { ...previous, transactions: [optimistic, ...previous.transactions] };
+    });
+  }
+
   async function reloadData(userId: string) {
     if (!supabase) return;
     setDataLoading(true);
@@ -262,6 +316,105 @@ export default function Home() {
       setDataLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (!session || !supabase) return;
+
+    const client = supabase;
+    const userId = session.user.id;
+    let cancelled = false;
+
+    async function syncOfflineQueue() {
+      if (
+        offlineSyncInFlight.current ||
+        typeof navigator === 'undefined' ||
+        !navigator.onLine
+      ) {
+        return;
+      }
+
+      const pending = readOfflineQueue().filter((item) => item.userId === userId);
+      if (!pending.length) return;
+
+      offlineSyncInFlight.current = true;
+      setDataLoading(true);
+      setError('');
+
+      const syncedIds = new Set<string>();
+      const failures: QueuedTransaction[] = [];
+
+      for (const item of pending) {
+        if (cancelled) break;
+
+        try {
+          const categoryId =
+            item.categoryId ?? (await ensureCategory(client, userId, item.category));
+
+          const payload = {
+            title: item.title,
+            amount: item.amount,
+            kind: item.kind,
+            categoryId,
+            date: item.date,
+            notes: item.notes,
+          };
+
+          if (item.action === 'update' && item.transactionId) {
+            await updateTransaction(client, item.transactionId, payload);
+          } else {
+            await createTransaction(client, userId, payload);
+          }
+
+          syncedIds.add(item.queueId);
+        } catch (err) {
+          console.error('Failed to sync offline transaction:', err);
+          failures.push(item);
+        }
+      }
+
+      const remaining = readOfflineQueue().filter((item) => !syncedIds.has(item.queueId));
+      if (remaining.length) {
+        writeOfflineQueue(remaining);
+      } else {
+        clearOfflineQueue();
+      }
+
+      if (!cancelled) {
+        if (syncedIds.size > 0) {
+          await reloadData(userId);
+          toast(
+            `Synced ${syncedIds.size} offline transaction${syncedIds.size === 1 ? '' : 's'}.`
+          );
+        }
+
+        if (failures.length) {
+          setError(
+            `${failures.length} offline transaction${
+              failures.length === 1 ? '' : 's'
+            } could not be synced and remain queued.`
+          );
+        }
+
+        setDataLoading(false);
+      }
+
+      offlineSyncInFlight.current = false;
+    }
+
+    const handleOnline = () => {
+      void syncOfflineQueue();
+    };
+
+    window.addEventListener('online', handleOnline);
+    if (navigator.onLine) {
+      void syncOfflineQueue();
+    }
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [session?.user?.id]);
 
   async function signInWithGoogle() {
     if (!supabase) {
@@ -665,37 +818,71 @@ export default function Home() {
             const parsed = transactionSchema.safeParse(draft);
             if (!parsed.success) throw new Error(parsed.error.issues[0].message);
 
+            const values = parsed.data;
+            const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+            if (offline) {
+              if (!session) throw new Error('Sign in again to save this transaction.');
+
+              if (draft.id.startsWith('offline-')) {
+                updateOfflineTransaction(draft.id.slice('offline-'.length), {
+                  title: values.title,
+                  amount: values.amount,
+                  kind: values.kind,
+                  category: values.category,
+                  categoryId: resolveCategoryId(values.category),
+                  date: values.date,
+                  notes: values.notes,
+                });
+                applyLocalTransaction(draft, values);
+                setTransactionDraft(null);
+                toast('Saved offline. Will sync when back online.');
+                return;
+              }
+
+              const queued = enqueueOfflineTransaction({
+                userId: session.user.id,
+                action: draft.id ? 'update' : 'create',
+                transactionId: draft.id || undefined,
+                title: values.title,
+                amount: values.amount,
+                kind: values.kind,
+                category: values.category,
+                categoryId: resolveCategoryId(values.category),
+                date: values.date,
+                notes: values.notes,
+              });
+
+              applyLocalTransaction(draft, values, queued.queueId);
+              setTransactionDraft(null);
+              toast('Saved offline. Will sync when back online.');
+              return;
+            }
+
             const client = getClient();
-            let catId = resolveCategoryId(parsed.data.category);
+            let catId = resolveCategoryId(values.category);
 
             if (!catId && session) {
-              catId = await ensureCategory(client, session.user.id, parsed.data.category);
+              catId = await ensureCategory(client, session.user.id, values.category);
             }
+
+            const payload = {
+              title: values.title,
+              amount: values.amount,
+              kind: values.kind,
+              categoryId: catId,
+              date: values.date,
+              notes: values.notes,
+            };
 
             if (draft.id) {
               await runCloudAction(
-                () =>
-                  updateTransaction(client, draft.id, {
-                    title: parsed.data.title,
-                    amount: parsed.data.amount,
-                    kind: parsed.data.kind,
-                    categoryId: catId,
-                    date: parsed.data.date,
-                    notes: parsed.data.notes,
-                  }),
+                () => updateTransaction(client, draft.id, payload),
                 'Transaction updated.'
               );
             } else {
               await runCloudAction(
-                () =>
-                  createTransaction(client, session.user.id, {
-                    title: parsed.data.title,
-                    amount: parsed.data.amount,
-                    kind: parsed.data.kind,
-                    categoryId: catId,
-                    date: parsed.data.date,
-                    notes: parsed.data.notes,
-                  }),
+                () => createTransaction(client, session.user.id, payload),
                 'Transaction recorded.'
               );
             }
