@@ -145,6 +145,14 @@ function localDateString(date: Date) {
 
 const today = () => localDateString(new Date());
 
+function reminderErrorMessage(err: unknown, fallback: string) {
+  const message = err instanceof Error ? err.message : '';
+  if (/user_notification_settings|schema cache|does not exist|relation/i.test(message)) {
+    return 'Daily reminder settings are unavailable right now. You can keep using the app and retry later.';
+  }
+  return message || fallback;
+}
+
 function getDateRange(preset: DateRangePreset, customStart: string, customEnd: string) {
   const now = new Date();
   const year = now.getFullYear();
@@ -1795,11 +1803,15 @@ export default function Home() {
     const [reminderTime, setReminderTime] = useState('09:00');
     const [reminderLoading, setReminderLoading] = useState(true);
     const [reminderSaving, setReminderSaving] = useState(false);
+    const [reminderError, setReminderError] = useState('');
+    const [reminderReloadToken, setReminderReloadToken] = useState(0);
     const [notificationPermission, setNotificationPermission] =
       useState<NotificationPermission>('default');
 
     useEffect(() => {
       let cancelled = false;
+
+      setReminderError('');
 
       if (!activeUser || !supabase) {
         setReminderLoading(false);
@@ -1810,6 +1822,8 @@ export default function Home() {
         setNotificationPermission(Notification.permission);
       }
 
+      setReminderLoading(true);
+
       loadNotificationSettings(supabase, activeUser.id)
         .then((settings) => {
           if (cancelled) return;
@@ -1818,7 +1832,11 @@ export default function Home() {
         })
         .catch((err) => {
           if (cancelled) return;
-          setError(err instanceof Error ? err.message : 'Could not load reminder settings.');
+          setReminderEnabled(false);
+          setReminderTime('09:00');
+          setReminderError(
+            reminderErrorMessage(err, 'Daily reminder settings are temporarily unavailable.')
+          );
         })
         .finally(() => {
           if (!cancelled) setReminderLoading(false);
@@ -1827,7 +1845,7 @@ export default function Home() {
       return () => {
         cancelled = true;
       };
-    }, [activeUser?.id]);
+    }, [activeUser?.id, reminderReloadToken]);
 
     async function handleReminderToggle(next: boolean) {
       if (next && typeof Notification !== 'undefined') {
@@ -1850,7 +1868,7 @@ export default function Home() {
     async function handleSaveReminder() {
       if (!activeUser) return;
       setReminderSaving(true);
-      setError('');
+      setReminderError('');
 
       try {
         if (
@@ -1868,7 +1886,9 @@ export default function Home() {
         });
         toast('Daily reminder settings saved.');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Could not save reminder settings.');
+        setReminderError(
+          reminderErrorMessage(err, 'Could not save reminder settings. Please try again.')
+        );
       } finally {
         setReminderSaving(false);
       }
@@ -1986,6 +2006,21 @@ export default function Home() {
                       ? 'Notifications are blocked in your browser settings.'
                       : 'You will be asked for notification permission when you enable this reminder.'}
               </p>
+              {reminderError && (
+                <div
+                  role="status"
+                  className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-1.5 text-[11px] text-amber-700 dark:text-amber-300"
+                >
+                  <span className="min-w-0 flex-1">{reminderError}</span>
+                  <button
+                    type="button"
+                    onClick={() => setReminderReloadToken((token) => token + 1)}
+                    className="font-semibold underline underline-offset-2 hover:text-amber-900 dark:hover:text-amber-200"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
             </div>
             <button
               type="button"
