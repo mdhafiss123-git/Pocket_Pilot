@@ -4,8 +4,8 @@
 
 @layer base {
 	:root {
-		--font-body: "Inter", "Avenir Next", "Manrope", "Segoe UI", sans-serif;
-		--font-display: "Inter", "Sora", "Trebuchet MS", sans-serif;
+		--font-body: "Inter", "Inter var", "SF Pro Text", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+		--font-display: "Inter", "Inter var", "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
 		--bg: #f8fafc;
 		--bg-elevated: #ffffff;
 		--surface: #ffffff;
@@ -58,7 +58,30 @@
 			radial-gradient(circle at -6% 10%, rgba(16, 185, 129, 0.1), transparent 36%),
 			linear-gradient(160deg, var(--bg), var(--bg-elevated));
 		background-attachment: fixed;
+		font-family: var(--font-body);
+		font-size: 0.9375rem;
+		line-height: 1.6;
+		letter-spacing: -0.006em;
+		font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+		text-rendering: optimizeLegibility;
 		@apply antialiased;
+	}
+
+	h1,
+	h2,
+	h3 {
+		font-family: var(--font-display);
+		letter-spacing: -0.025em;
+		text-wrap: balance;
+	}
+
+	h1,
+	h2 {
+		font-weight: 650;
+	}
+
+	h3 {
+		font-weight: 600;
 	}
 
 	.dark body {
@@ -205,5 +228,8 @@
 
 	.metric-value {
 		@apply text-2xl font-semibold lg:text-3xl;
+		font-variant-numeric: tabular-nums;
+		letter-spacing: -0.03em;
+		line-height: 1.15;
 	}
 }

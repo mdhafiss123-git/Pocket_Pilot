@@ -29,6 +29,15 @@ type TaskRow = {
   reminder_at: string | null;
 };
 type ProfileRow = { display_name: string | null; currency: string | null };
+type NotificationSettingsRow = {
+  daily_reminder_enabled: boolean;
+  reminder_time: string | null;
+};
+
+export type NotificationSettings = {
+  enabled: boolean;
+  time: string;
+};
 
 function pickName(joined: { name: string } | { name: string }[] | null, fallback: string) {
   if (!joined) return fallback;
@@ -118,6 +127,41 @@ export async function loadUserData(client: SupabaseClient, userId: string): Prom
 
 export async function saveProfile(client: SupabaseClient, userId: string, profile: Profile) {
   const { error } = await client.from('profiles').upsert({ id: userId, display_name: profile.displayName || null, currency: profile.currency }, { onConflict: 'id' });
+  if (error) throw new Error(error.message);
+}
+
+export async function loadNotificationSettings(
+  client: SupabaseClient,
+  userId: string
+): Promise<NotificationSettings> {
+  const { data, error } = await client
+    .from('user_notification_settings')
+    .select('daily_reminder_enabled,reminder_time')
+    .eq('user_id', userId)
+    .maybeSingle<NotificationSettingsRow>();
+
+  if (error) throw new Error(error.message);
+
+  return {
+    enabled: data?.daily_reminder_enabled ?? false,
+    time: (data?.reminder_time ?? '09:00').slice(0, 5),
+  };
+}
+
+export async function saveNotificationSettings(
+  client: SupabaseClient,
+  userId: string,
+  settings: NotificationSettings
+) {
+  const { error } = await client.from('user_notification_settings').upsert(
+    {
+      user_id: userId,
+      daily_reminder_enabled: settings.enabled,
+      reminder_time: settings.time,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id' }
+  );
   if (error) throw new Error(error.message);
 }
 

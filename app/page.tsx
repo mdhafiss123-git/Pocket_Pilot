@@ -5,6 +5,8 @@ import type { Session } from '@supabase/supabase-js';
 import {
   ArrowUpRight,
   BarChart3,
+  Bell,
+  Calculator,
   CalendarDays,
   CheckCircle2,
   Download,
@@ -60,7 +62,9 @@ import {
   deleteTask,
   deleteTransaction,
   ensureCategory,
+  loadNotificationSettings,
   loadUserData,
+  saveNotificationSettings,
   saveProfile,
   updateBudget,
   updateGoal,
@@ -121,7 +125,190 @@ const SUPPORTED_CURRENCIES = [
   { code: 'SGD', symbol: '$', name: 'Singapore Dollar' },
 ] as const;
 
-const today = () => new Date().toISOString().slice(0, 10);
+type DateRangePreset = 'today' | 'week' | 'month' | 'lastMonth' | 'year' | 'custom';
+
+const DATE_RANGE_OPTIONS: { value: DateRangePreset; label: string }[] = [
+  { value: 'today', label: 'Today' },
+  { value: 'week', label: 'Last 7 days' },
+  { value: 'month', label: 'This month' },
+  { value: 'lastMonth', label: 'Last month' },
+  { value: 'year', label: 'This year' },
+  { value: 'custom', label: 'Custom range' },
+];
+
+function localDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+const today = () => localDateString(new Date());
+
+function getDateRange(preset: DateRangePreset, customStart: string, customEnd: string) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const monthEnd = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
+
+  if (preset === 'today') {
+    const date = localDateString(now);
+    return { start: date, end: date, label: 'Today' };
+  }
+
+  if (preset === 'week') {
+    const start = new Date(now);
+    start.setDate(start.getDate() - 6);
+    return { start: localDateString(start), end: localDateString(now), label: 'Last 7 days' };
+  }
+
+  if (preset === 'month') {
+    return {
+      start: localDateString(new Date(year, month, 1)),
+      end: localDateString(now),
+      label: 'This month',
+    };
+  }
+
+  if (preset === 'lastMonth') {
+    const anchor = new Date(year, month - 1, 1);
+    return {
+      start: localDateString(anchor),
+      end: localDateString(
+        new Date(anchor.getFullYear(), anchor.getMonth(), monthEnd(anchor.getFullYear(), anchor.getMonth()))
+      ),
+      label: 'Last month',
+    };
+  }
+
+  if (preset === 'year') {
+    return { start: `${year}-01-01`, end: localDateString(now), label: 'This year' };
+  }
+
+  const fallback = localDateString(now);
+  let start = customStart || fallback;
+  let end = customEnd || fallback;
+  if (start > end) [start, end] = [end, start];
+  return { start, end, label: 'Custom range' };
+}
+
+function formatRangeDate(value: string) {
+  const [year, month, day] = value.split('-').map(Number);
+  if (!year || !month || !day) return value;
+  return new Date(year, month - 1, day).toLocaleDateString('en', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function buildSpendingSeries(
+  expenses: Pick<Transaction, 'date' | 'amount'>[],
+  preset: DateRangePreset,
+  startDate: string,
+  endDate: string
+): { day: string; spending: number }[] {
+  const start = new Date(`${startDate}T00:00:00Z`);
+  const end = new Date(`${endDate}T00:00:00Z`);
+  const totalDays = Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1;
+  const sumFor = (matches: (date: string) => boolean) =>
+    expenses.filter((item) => matches(item.date)).reduce((sum, item) => sum + item.amount, 0);
+
+  if (preset === 'year' || totalDays > 31) {
+    const series: { day: string; spending: number }[] = [];
+    let cursor = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
+    while (cursor.getTime() <= end.getTime()) {
+      const monthKey = cursor.toISOString().slice(0, 7);
+      series.push({
+        day: cursor.toLocaleDateString('en', { month: 'short', timeZone: 'UTC' }),
+        spending: sumFor((date) => date.startsWith(monthKey)),
+      });
+      cursor = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 1));
+    }
+    return series;
+  }
+
+  const series: { day: string; spending: number }[] = [];
+  for (let time = start.getTime(); time <= end.getTime(); time += 86_400_000) {
+    const date = new Date(time);
+    const dateKey = date.toISOString().slice(0, 10);
+    series.push({
+      day:
+        totalDays <= 7
+          ? date.toLocaleDateString('en', { weekday: 'short', timeZone: 'UTC' })
+          : String(date.getUTCDate()),
+      spending: sumFor((itemDate) => itemDate === dateKey),
+    });
+  }
+  return series;
+}
+
+function calculateExpression(expression: string): number | null {
+  const tokens = expression.match(/\d+\.?\d*|\.\d+|[+\-*/]/g);
+  if (!tokens || !tokens.length) return null;
+
+  const numbers: number[] = [];
+  const operators: string[] = [];
+  const precedence: Record<string, number> = { '+': 1, '-': 1, '*': 2, '/': 2 };
+  let expectNumber = true;
+
+  const apply = () => {
+    const operator = operators.pop();
+    const right = numbers.pop();
+    const left = numbers.pop();
+    if (!operator || left === undefined || right === undefined) return false;
+
+    if (operator === '+') numbers.push(left + right);
+    else if (operator === '-') numbers.push(left - right);
+    else if (operator === '*') numbers.push(left * right);
+    else if (operator === '/') {
+      if (right === 0) return false;
+      numbers.push(left / right);
+    }
+    return true;
+  };
+
+  for (const token of tokens) {
+    if (/^\d/.test(token) || token.startsWith('.')) {
+      if (!expectNumber) return null;
+      numbers.push(Number(token));
+      expectNumber = false;
+    } else {
+      if (expectNumber) return null;
+      while (operators.length && precedence[operators[operators.length - 1]] >= precedence[token]) {
+        if (!apply()) return null;
+      }
+      operators.push(token);
+      expectNumber = true;
+    }
+  }
+
+  if (expectNumber) return null;
+  while (operators.length) {
+    if (!apply()) return null;
+  }
+
+  return numbers.length === 1 && Number.isFinite(numbers[0]) ? numbers[0] : null;
+}
+
+const CALCULATOR_KEYS = [
+  '7',
+  '8',
+  '9',
+  '/',
+  '4',
+  '5',
+  '6',
+  '*',
+  '1',
+  '2',
+  '3',
+  '-',
+  '0',
+  '.',
+  '=',
+  '+',
+];
 
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
@@ -142,7 +329,9 @@ export default function Home() {
   const [taskDraft, setTaskDraft] = useState<Task | null>(null);
   const [budgetDraftId, setBudgetDraftId] = useState<string | null>(null);
   const [goalDraft, setGoalDraft] = useState<Goal | null>(null);
-  const [spendingRange, setSpendingRange] = useState<'today' | 'week' | 'month' | 'lastMonth' | 'year'>('week');
+  const [dashboardRange, setDashboardRange] = useState<DateRangePreset>('week');
+  const [dashboardCustomStart, setDashboardCustomStart] = useState(today());
+  const [dashboardCustomEnd, setDashboardCustomEnd] = useState(today());
 
   const userCurrency = data?.profile?.currency || 'INR';
 
@@ -494,60 +683,37 @@ export default function Home() {
   const earned = income.reduce((sum, x) => sum + x.amount, 0);
   const balance = earned - spent;
 
-  const spending = useMemo(() => {
-    const now = new Date();
-    if (spendingRange === 'today') {
-      const date = now.toISOString().slice(0, 10);
-      return [
-        {
-          day: now.toLocaleDateString('en', { weekday: 'short' }),
-          spending: expenses.filter((x) => x.date === date).reduce((sum, x) => sum + x.amount, 0),
-        },
-      ];
-    } else if (spendingRange === 'week') {
-      return Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(now);
-        d.setDate(d.getDate() - 6 + i);
-        const date = d.toISOString().slice(0, 10);
-        return {
-          day: d.toLocaleDateString('en', { weekday: 'short' }),
-          spending: expenses.filter((x) => x.date === date).reduce((sum, x) => sum + x.amount, 0),
-        };
-      });
-    } else if (spendingRange === 'month') {
-      const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      return Array.from({ length: days }, (_, i) => {
-        const d = new Date(now.getFullYear(), now.getMonth(), i + 1);
-        const date = d.toISOString().slice(0, 10);
-        return {
-          day: String(i + 1),
-          spending: expenses.filter((x) => x.date === date).reduce((sum, x) => sum + x.amount, 0),
-        };
-      });
-    } else if (spendingRange === 'lastMonth') {
-      const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-      return Array.from({ length: days }, (_, i) => {
-        const date = new Date(d.getFullYear(), d.getMonth(), i + 1).toISOString().slice(0, 10);
-        return {
-          day: String(i + 1),
-          spending: expenses.filter((x) => x.date === date).reduce((sum, x) => sum + x.amount, 0),
-        };
-      });
-    } else if (spendingRange === 'year') {
-      return Array.from({ length: 12 }, (_, i) => {
-        const monthExpenses = expenses.filter((x) => {
-          const xd = new Date(x.date);
-          return xd.getFullYear() === now.getFullYear() && xd.getMonth() === i;
-        });
-        return {
-          day: new Date(now.getFullYear(), i).toLocaleDateString('en', { month: 'short' }),
-          spending: monthExpenses.reduce((sum, x) => sum + x.amount, 0),
-        };
-      });
-    }
-    return [];
-  }, [spendingRange, expenses]);
+  const activeRange = useMemo(
+    () => getDateRange(dashboardRange, dashboardCustomStart, dashboardCustomEnd),
+    [dashboardRange, dashboardCustomStart, dashboardCustomEnd]
+  );
+
+  const rangeTransactions = useMemo(
+    () =>
+      appData.transactions.filter(
+        (transaction) => transaction.date >= activeRange.start && transaction.date <= activeRange.end
+      ),
+    [appData.transactions, activeRange.start, activeRange.end]
+  );
+
+  const rangeExpenses = useMemo(
+    () => rangeTransactions.filter((transaction) => transaction.kind === 'expense'),
+    [rangeTransactions]
+  );
+
+  const rangeIncome = useMemo(
+    () => rangeTransactions.filter((transaction) => transaction.kind === 'income'),
+    [rangeTransactions]
+  );
+
+  const rangeSpent = rangeExpenses.reduce((sum, transaction) => sum + transaction.amount, 0);
+  const rangeEarned = rangeIncome.reduce((sum, transaction) => sum + transaction.amount, 0);
+  const rangeBalance = rangeEarned - rangeSpent;
+
+  const spending = useMemo(
+    () => buildSpendingSeries(rangeExpenses, dashboardRange, activeRange.start, activeRange.end),
+    [rangeExpenses, dashboardRange, activeRange.start, activeRange.end]
+  );
 
   if (authLoading) {
     return (
@@ -719,15 +885,15 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white/60 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60 sm:flex">
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-emerald-500/15 text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">
-                  {(session.user.email ?? '?').slice(0, 1)}
-                </span>
-                <span className="max-w-[180px] truncate text-xs text-slate-600 dark:text-slate-300">
-                  {session.user.email}
-                </span>
-              </div>
               <ThemeToggle />
+              <button
+                onClick={() => setShowSignOutModal(true)}
+                className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white/70 text-slate-600 transition hover:border-rose-200 hover:bg-rose-500/10 hover:text-rose-600 active:scale-95 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:border-rose-500/30 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                aria-label="Sign out"
+                title="Sign out"
+              >
+                <LogoutIcon size={18} />
+              </button>
             </div>
           </div>
         </header>
@@ -995,12 +1161,15 @@ export default function Home() {
   );
 
   function Dashboard() {
-    const savingsRate = earned > 0 ? Math.max(0, Math.round((balance / earned) * 100)) : 0;
-    const recent = [...appData.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
+    const savingsRate =
+      rangeEarned > 0 ? Math.max(0, Math.round((rangeBalance / rangeEarned) * 100)) : 0;
+    const recent = [...rangeTransactions]
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 4);
 
     return (
       <div className="space-y-5 sm:space-y-6">
-        <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <section className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
               Financial overview
@@ -1009,19 +1178,58 @@ export default function Home() {
               Welcome back
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Here is how your money is moving right now.
+              Here is how your money is moving for {activeRange.label.toLowerCase()}.
             </p>
           </div>
-          <button onClick={openAddTransaction} className="btn-primary w-full sm:w-auto">
-            <Plus size={16} strokeWidth={2.25} /> Quick add
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center xl:justify-end">
+            <label className="flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 dark:border-slate-800 dark:bg-slate-900/60">
+              <CalendarDays size={15} className="text-emerald-600 dark:text-emerald-400" />
+              <span className="sr-only">Dashboard date range</span>
+              <select
+                aria-label="Dashboard date range"
+                value={dashboardRange}
+                onChange={(e) => setDashboardRange(e.target.value as DateRangePreset)}
+                className="bg-transparent text-xs font-semibold text-slate-700 outline-none dark:text-slate-200"
+              >
+                {DATE_RANGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {dashboardRange === 'custom' && (
+              <div className="flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
+                <input
+                  type="date"
+                  aria-label="Custom range start date"
+                  value={dashboardCustomStart}
+                  max={dashboardCustomEnd}
+                  onChange={(e) => setDashboardCustomStart(e.target.value)}
+                  className="bg-transparent font-medium text-slate-700 outline-none dark:text-slate-200"
+                />
+                <span>to</span>
+                <input
+                  type="date"
+                  aria-label="Custom range end date"
+                  value={dashboardCustomEnd}
+                  min={dashboardCustomStart}
+                  onChange={(e) => setDashboardCustomEnd(e.target.value)}
+                  className="bg-transparent font-medium text-slate-700 outline-none dark:text-slate-200"
+                />
+              </div>
+            )}
+            <button onClick={openAddTransaction} className="btn-primary w-full sm:w-auto">
+              <Plus size={16} strokeWidth={2.25} /> Quick add
+            </button>
+          </div>
         </section>
 
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Net Balance" value={money(balance, userCurrency)} hint={`${savingsRate}% savings rate`} icon={WalletCards} tone="sky" />
-          <StatCard label="Income" value={money(earned, userCurrency)} hint={`${income.length} income entries`} icon={TrendingUp} tone="emerald" />
-          <StatCard label="Spent" value={money(spent, userCurrency)} hint={`${expenses.length} expense entries`} icon={TrendingDown} tone="rose" />
-          <StatCard label="Net Saved" value={money(balance, userCurrency)} hint={balance >= 0 ? 'On track this period' : 'Spending exceeds income'} icon={ArrowUpRight} tone="violet" />
+          <StatCard label="Net Balance" value={money(rangeBalance, userCurrency)} hint={`${savingsRate}% savings rate`} icon={WalletCards} tone="sky" />
+          <StatCard label="Income" value={money(rangeEarned, userCurrency)} hint={`${rangeIncome.length} income entries`} icon={TrendingUp} tone="emerald" />
+          <StatCard label="Spent" value={money(rangeSpent, userCurrency)} hint={`${rangeExpenses.length} expense entries`} icon={TrendingDown} tone="rose" />
+          <StatCard label="Net Saved" value={money(rangeBalance, userCurrency)} hint={rangeBalance >= 0 ? 'On track this period' : 'Spending exceeds income'} icon={ArrowUpRight} tone="violet" />
         </section>
 
         <section className="grid gap-5 xl:grid-cols-[1.6fr_1fr]">
@@ -1031,17 +1239,16 @@ export default function Home() {
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Spending Velocity</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Expense trend over time</p>
               </div>
-              <select
-                value={spendingRange}
-                onChange={(e) => setSpendingRange(e.target.value as typeof spendingRange)}
-                className="min-h-10 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 outline-none transition hover:border-slate-300 focus:border-emerald-500/60 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-200 dark:hover:border-slate-600"
-              >
-                <option value="today">Today</option>
-                <option value="week">Last 7 days</option>
-                <option value="month">This month</option>
-                <option value="lastMonth">Last month</option>
-                <option value="year">1 year</option>
-              </select>
+              <div className="text-right">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
+                  <CalendarDays size={12} strokeWidth={2} /> {activeRange.label}
+                </span>
+                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  {activeRange.start === activeRange.end
+                    ? formatRangeDate(activeRange.start)
+                    : `${formatRangeDate(activeRange.start)} – ${formatRangeDate(activeRange.end)}`}
+                </p>
+              </div>
             </div>
             <Chart data={spending} currency={userCurrency} />
           </div>
@@ -1584,6 +1791,88 @@ export default function Home() {
     const [displayName, setDisplayName] = useState(appData.profile?.displayName || activeUser?.user_metadata?.full_name || '');
     const [selectedCurrency, setSelectedCurrency] = useState(userCurrency);
     const [saving, setSaving] = useState(false);
+    const [reminderEnabled, setReminderEnabled] = useState(false);
+    const [reminderTime, setReminderTime] = useState('09:00');
+    const [reminderLoading, setReminderLoading] = useState(true);
+    const [reminderSaving, setReminderSaving] = useState(false);
+    const [notificationPermission, setNotificationPermission] =
+      useState<NotificationPermission>('default');
+
+    useEffect(() => {
+      let cancelled = false;
+
+      if (!activeUser || !supabase) {
+        setReminderLoading(false);
+        return;
+      }
+
+      if (typeof Notification !== 'undefined') {
+        setNotificationPermission(Notification.permission);
+      }
+
+      loadNotificationSettings(supabase, activeUser.id)
+        .then((settings) => {
+          if (cancelled) return;
+          setReminderEnabled(settings.enabled);
+          setReminderTime(settings.time);
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          setError(err instanceof Error ? err.message : 'Could not load reminder settings.');
+        })
+        .finally(() => {
+          if (!cancelled) setReminderLoading(false);
+        });
+
+      return () => {
+        cancelled = true;
+      };
+    }, [activeUser?.id]);
+
+    async function handleReminderToggle(next: boolean) {
+      if (next && typeof Notification !== 'undefined') {
+        try {
+          const permission =
+            Notification.permission === 'default'
+              ? await Notification.requestPermission()
+              : Notification.permission;
+          setNotificationPermission(permission);
+          if (permission !== 'granted') {
+            toast('Browser notifications are blocked. Enable them in your browser settings.');
+          }
+        } catch {
+          toast('Could not request notification permission.');
+        }
+      }
+      setReminderEnabled(next);
+    }
+
+    async function handleSaveReminder() {
+      if (!activeUser) return;
+      setReminderSaving(true);
+      setError('');
+
+      try {
+        if (
+          reminderEnabled &&
+          typeof Notification !== 'undefined' &&
+          Notification.permission === 'default'
+        ) {
+          setNotificationPermission(await Notification.requestPermission());
+        }
+
+        const client = getClient();
+        await saveNotificationSettings(client, activeUser.id, {
+          enabled: reminderEnabled,
+          time: reminderTime,
+        });
+        toast('Daily reminder settings saved.');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not save reminder settings.');
+      } finally {
+        setReminderSaving(false);
+      }
+    }
 
     async function handleSaveProfile(e: React.FormEvent) {
       e.preventDefault();
@@ -1637,6 +1926,76 @@ export default function Home() {
               </button>
             </div>
           </form>
+        </div>
+
+        <div className="surface-card p-5 sm:p-6">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <Bell size={20} strokeWidth={1.75} />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">Daily Reminder</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Get a gentle nudge to review your money each day.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={reminderEnabled}
+              aria-label="Toggle daily reminder"
+              onClick={() => void handleReminderToggle(!reminderEnabled)}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition ${
+                reminderEnabled
+                  ? 'border-emerald-500 bg-emerald-500'
+                  : 'border-slate-300 bg-slate-200 dark:border-slate-700 dark:bg-slate-800'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                  reminderEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+            <div>
+              <label
+                htmlFor="reminder-time"
+                className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300"
+              >
+                Reminder time
+              </label>
+              <input
+                id="reminder-time"
+                type="time"
+                className="field max-w-[180px]"
+                value={reminderTime}
+                onChange={(e) => setReminderTime(e.target.value)}
+                disabled={reminderLoading}
+                required
+              />
+              <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                {reminderLoading
+                  ? 'Loading your reminder preferences...'
+                  : notificationPermission === 'granted'
+                    ? 'Browser notifications are enabled.'
+                    : notificationPermission === 'denied'
+                      ? 'Notifications are blocked in your browser settings.'
+                      : 'You will be asked for notification permission when you enable this reminder.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleSaveReminder()}
+              disabled={reminderSaving || reminderLoading}
+              className="btn-primary w-full sm:w-auto"
+            >
+              {reminderSaving ? 'Saving...' : 'Save reminder'}
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -1719,7 +2078,7 @@ function StatCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
-          <p className="mt-2 truncate text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+          <p className="mt-2 truncate text-2xl font-semibold tracking-tight text-slate-900 tabular-nums dark:text-white">
             {value}
           </p>
         </div>
@@ -1749,6 +2108,9 @@ function TransactionModal({ draft, data, currency, onClose, onSave }: { draft: T
   const [value, setValue] = useState<Transaction>(draft);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [calcOpen, setCalcOpen] = useState(false);
+  const [calcExpression, setCalcExpression] = useState('');
+  const [calcError, setCalcError] = useState('');
 
   const categoryOptions = useMemo(() => {
     if (value.kind === 'expense') {
@@ -1766,25 +2128,177 @@ function TransactionModal({ draft, data, currency, onClose, onSave }: { draft: T
     setValue({ ...value, kind: newKind, category: isCurrentValid ? value.category : newOptions[0] });
   }
 
+  function toggleCalculator() {
+    if (!calcOpen) {
+      setCalcExpression(value.amount ? String(value.amount) : '');
+      setCalcError('');
+    }
+    setCalcOpen((open) => !open);
+  }
+
+  function pressCalculatorKey(key: string) {
+    setCalcError('');
+
+    if (key === 'C') {
+      setCalcExpression('');
+      return;
+    }
+
+    if (key === 'backspace') {
+      setCalcExpression((expression) => expression.slice(0, -1));
+      return;
+    }
+
+    if (key === '=') {
+      const result = calculateExpression(calcExpression);
+      if (result === null) {
+        setCalcError('Invalid expression');
+        return;
+      }
+      const rounded = Math.round(result * 100) / 100;
+      setCalcExpression(String(rounded));
+      setValue((current) => ({ ...current, amount: rounded }));
+      return;
+    }
+
+    if (key === '+' || key === '-' || key === '*' || key === '/') {
+      setCalcExpression((expression) => {
+        if (!expression) return key === '-' ? '-' : expression;
+        if (/[+\-*/]$/.test(expression)) return `${expression.slice(0, -1)}${key}`;
+        return `${expression}${key}`;
+      });
+      return;
+    }
+
+    if (key === '.') {
+      setCalcExpression((expression) => {
+        const lastNumber = expression.split(/[+\-*/]/).pop() ?? '';
+        if (lastNumber.includes('.')) return expression;
+        return lastNumber ? `${expression}.` : `${expression}0.`;
+      });
+      return;
+    }
+
+    setCalcExpression((expression) => `${expression}${key}`);
+  }
+
   return (
     <Modal title={draft.id ? 'Edit Transaction' : 'Add Transaction'} close={onClose}>
       <form className="space-y-3.5" onSubmit={async (e) => { e.preventDefault(); setSaving(true); setError(''); try { await onSave(value); } catch (err) { setError(err instanceof Error ? err.message : 'Failed'); } finally { setSaving(false); } }}>
         <div>
+          <span className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Transaction type</span>
+          <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-slate-200 bg-slate-100/80 p-1.5 dark:border-slate-800 dark:bg-slate-950/50">
+            <button
+              type="button"
+              aria-pressed={value.kind === 'income'}
+              onClick={() => handleKindChange('income')}
+              className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition ${
+                value.kind === 'income'
+                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/25'
+                  : 'text-slate-500 hover:bg-white/70 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-slate-200'
+              }`}
+            >
+              <TrendingUp size={16} strokeWidth={2} /> Income
+            </button>
+            <button
+              type="button"
+              aria-pressed={value.kind === 'expense'}
+              onClick={() => handleKindChange('expense')}
+              className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition ${
+                value.kind === 'expense'
+                  ? 'bg-rose-500 text-white shadow-md shadow-rose-500/25'
+                  : 'text-slate-500 hover:bg-white/70 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-slate-200'
+              }`}
+            >
+              <TrendingDown size={16} strokeWidth={2} /> Expense
+            </button>
+          </div>
+        </div>
+        <div>
           <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Title</label>
           <input className="field" value={value.title} onChange={(e) => setValue({ ...value, title: e.target.value })} placeholder="e.g. Grocery run" required />
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Amount ({currency})</label>
-            <input className="field" type="number" value={value.amount || ''} onChange={(e) => setValue({ ...value, amount: Number(e.target.value) })} placeholder="0" required />
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Amount ({currency})</label>
+          <div className="relative">
+            <input
+              className="field pr-12"
+              type="number"
+              value={value.amount || ''}
+              onChange={(e) => setValue({ ...value, amount: Number(e.target.value) })}
+              placeholder="0"
+              required
+            />
+            <button
+              type="button"
+              onClick={toggleCalculator}
+              aria-label="Toggle quick calculator"
+              aria-expanded={calcOpen}
+              className={`absolute right-1.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg transition ${
+                calcOpen
+                  ? 'bg-emerald-500 text-slate-950'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Calculator size={16} strokeWidth={1.9} />
+            </button>
           </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Type</label>
-            <select className="field" value={value.kind} onChange={(e) => handleKindChange(e.target.value as Transaction['kind'])}>
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
-            </select>
-          </div>
+          {calcOpen && (
+            <div className="mt-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/60">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  Quick calculator
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => pressCalculatorKey('backspace')}
+                    className="grid h-7 w-7 place-items-center rounded-md text-xs font-semibold text-slate-500 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:bg-slate-800"
+                    aria-label="Backspace"
+                  >
+                    ⌫
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => pressCalculatorKey('C')}
+                    className="grid h-7 w-7 place-items-center rounded-md text-xs font-semibold text-rose-600 hover:bg-rose-500/10 dark:text-rose-400"
+                    aria-label="Clear calculator"
+                  >
+                    C
+                  </button>
+                </div>
+              </div>
+              <div className="mt-2 min-h-10 overflow-x-auto rounded-lg bg-white px-3 py-2 text-right font-mono text-sm font-semibold text-slate-900 dark:bg-slate-900 dark:text-white">
+                {calcExpression ? calcExpression.replace(/\*/g, '×').replace(/\//g, '÷') : '0'}
+              </div>
+              {calcError && (
+                <p className="mt-1.5 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                  {calcError}
+                </p>
+              )}
+              <div className="mt-2 grid grid-cols-4 gap-1.5">
+                {CALCULATOR_KEYS.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => pressCalculatorKey(key)}
+                    className={`grid h-9 place-items-center rounded-lg text-sm font-semibold transition active:scale-95 ${
+                      key === '='
+                        ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
+                        : key === '+' || key === '-' || key === '*' || key === '/'
+                          ? 'bg-slate-200/80 text-slate-700 hover:bg-slate-300/80 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+                          : 'bg-white text-slate-800 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {key === '*' ? '×' : key === '/' ? '÷' : key}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">
+                Press = to fill the amount.
+              </p>
+            </div>
+          )}
         </div>
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">Category</label>
